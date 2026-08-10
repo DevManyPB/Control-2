@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALUNA PBR-02 "Aluna Duna" — Presentación</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="bg-layer">
+        <div class="bg-image"></div>
+        <div class="bg-overlay"></div>
+        <div class="bg-gradient"></div>
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+    <canvas id="particles-canvas"></canvas>
+
+    <div class="characters">
+        <img src="frailejon_character_1786323422099.png" class="char char-frailejon" id="char-frailejon" alt="Frailejón">
+        <img src="chlorella_character_1786323439290.png" class="char char-chlorella" id="char-chlorella" alt="Chlorella">
+        <img src="bioreactor_cartoon_1786323446804.png" class="char char-reactor" id="char-reactor" alt="Biorreactor">
+    </div>
+
+    <div class="slide-dots" id="slide-dots"></div>
+
+    <div class="slides-wrapper" id="slides-wrapper">
+
+        <!-- 1. TÍTULO (Intro) -->
+        <section class="slide active" data-accent="tropical" data-char="none">
+            <div class="card">
+                <span class="card-tag">Ingeniería Electrónica – Universidad del Magdalena</span>
+                <h1>ALUNA PBR-02</h1>
+                <h2>Fotobiorreactor Biomimético</h2>
+                <p class="card-lead">Adaptación de mecanismos térmicos biológicos para la optimización del cultivo de <em>Chlorella vulgaris</em>.</p>
+                <div class="card-chips">
+                    <span class="chip">Control Térmico</span>
+                    <span class="chip">Biomímesis</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. EQUIPO -->
+        <section class="slide" data-accent="blue" data-char="none">
+            <div class="card">
+                <span class="card-tag">Proyecto de Control y Biomímesis</span>
+                <h1>El Equipo</h1>
+                <h2>Presentado por:</h2>
+                <div class="team-grid">
+                    <div class="team-member"><strong>Santiago Cavadía</strong></div>
+                    <div class="team-member"><strong>Jhon Cardenas</strong></div>
+                    <div class="team-member"><strong>Raul Bayter</strong></div>
+                    <div class="team-member"><strong>Ivan Meza</strong></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. OBJETIVO DEL PROYECTO -->
+        <section class="slide" data-accent="tropical" data-char="reactor">
+            <div class="card">
+                <span class="card-tag">El Propósito</span>
+                <h1>Objetivo del Proyecto</h1>
+                <h2>Mantener la Estabilidad</h2>
+                <ul class="info-list">
+                    <li>Diseñar y controlar un fotobiorreactor con una <strong>camisa aislante adaptativa</strong>.</li>
+                    <li><strong>El Reto Físico Asignado:</strong> Lograr la regulación térmica del cultivo frente a fluctuaciones climáticas externas.</li>
+                    <li><strong>La Solución:</strong> Adaptar los mecanismos biológicos de la especie asignada (el frailejón <em>Espeletia occulta</em>) mediante automatización.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 4. BIOMIMESIS -->
+        <section class="slide" data-accent="silver" data-char="none">
+            <div class="card">
+                <span class="card-tag">Marco de Trabajo</span>
+                <h1>Biomímesis</h1>
+                <h2>La Naturaleza como Espejo</h2>
+                <ul class="info-list">
+                    <li><strong>No reinventar la rueda:</strong> Usamos millones de años de naturaleza evolutiva como plantilla de diseño.</li>
+                    <li>El concepto: Replicar respuestas biológicas frente a climas severos para resolver nuestro problema termodinámico.</li>
+                    <li>Buscar siempre la <strong>regulación pasiva</strong> antes del gasto activo de energía.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 5. INSPIRACIÓN BIOLÓGICA (FRAILEJÓN) -->
+        <section class="slide" data-accent="green" data-char="frailejon">
+            <div class="card">
+                <span class="card-tag">El Problema Físico Original</span>
+                <h1>Espeletia occulta</h1>
+                <h2>Sobrevivir al Páramo</h2>
+                <p class="card-lead">Subsp. <em>glossophylla</em> — Endémico de la Sierra Nevada.</p>
+                <ul class="info-list">
+                    <li>Habita en entornos con alta radiación solar y variaciones térmicas extremas (de congelamiento a sol quemante).</li>
+                    <li><strong>El reto biológico:</strong> No gasta energía metabólica en enfriarse o calentarse, usa física pura.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 6. MECANISMOS DEL FRAILEJON -->
+        <section class="slide" data-accent="brown" data-char="frailejon">
+            <div class="card">
+                <span class="card-tag">Estructuras Físicas de la Planta</span>
+                <h1>Mecanismos Térmicos</h1>
+                <h2>Aislamiento y Reflectancia</h2>
+                <ul class="info-list">
+                    <li><strong>Necromasa (Hojas muertas):</strong> No caen; envuelven el tallo creando microcapas de aire estancado que aíslan del exterior.</li>
+                    <li><strong>Pubescencia (Vellosidades):</strong> Generan una alta reflectancia (albedo) para rechazar el exceso de irradiancia solar directamente.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 7. NICTINASTIA -->
+        <section class="slide" data-accent="teal" data-char="frailejon">
+            <div class="card">
+                <span class="card-tag">Mecanismo Dinámico</span>
+                <h1>Nictinastia</h1>
+                <h2>Movimiento Foliar</h2>
+                <ul class="info-list">
+                    <li>La roseta de hojas es dinámica: <strong>se cierra durante la noche y se abre de día</strong>.</li>
+                    <li>Al cerrarse sobre la yema apical (el núcleo), actúa como un abrigo térmico.</li>
+                    <li>Este movimiento protege el centro vital del congelamiento en las noches heladas del páramo.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 8. EL ORGANISMO (MICROALGA) -->
+        <section class="slide" data-accent="teal" data-char="chlorella">
+            <div class="card">
+                <span class="card-tag">La Cepa Biológica</span>
+                <h1>Chlorella vulgaris</h1>
+                <h2>¿Qué vamos a cultivar?</h2>
+                <div style="text-align:center; margin: 1.5rem 0;">
+                    <img src="Algas.jpeg" alt="Chlorella vulgaris" style="max-height: 180px; width: auto; border-radius: 12px; border: 2px solid rgba(255,255,255,0.15); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                </div>
+                <ul class="info-list">
+                    <li>Una microalga con alta tasa de crecimiento y resistencia general.</li>
+                    <li>Un modelo biológico ampliamente documentado en bioingeniería.</li>
+                    <li>Ideal por su facilidad para realizar un control cinético preciso en el reactor.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 9. PARAMETROS DEL CULTIVO -->
+        <section class="slide" data-accent="blue" data-char="chlorella">
+            <div class="card">
+                <span class="card-tag">Límites Biológicos</span>
+                <h1>Parámetros Críticos</h1>
+                <h2>Requerimientos del Cultivo</h2>
+                <ul class="info-list">
+                    <li><strong>Temperatura óptima:</strong> 25 °C – 30 °C.</li>
+                    <li><strong>Peligro:</strong> Estrés irreversible y muerte si supera los 35 °C.</li>
+                    <li><strong>pH:</strong> Entre 7.0 y 8.0.</li>
+                    <li><strong>Iluminación:</strong> Irradiancia de 100 – 200 µE/m²/s.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 10. MODELO MATEMATICO -->
+        <section class="slide" data-accent="green" data-char="chlorella">
+            <div class="card">
+                <span class="card-tag">Fundamentación Teórica</span>
+                <h1>Modelo Dinámico</h1>
+                <h2>Balances y Cinética</h2>
+                <ul class="info-list">
+                    <li>Implementación de <strong>ecuaciones de balance de masa y energía</strong>.</li>
+                    <li>Modelado del crecimiento biológico mediante la cinética de <strong>Monod/Haldane</strong>.</li>
+                    <li>La tasa de crecimiento está dictada estrictamente por la temperatura interna y la luz disponible.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 11. EL RETO EN SANTA MARTA -->
+        <section class="slide" data-accent="warm" data-char="none">
+            <div class="card">
+                <span class="card-tag">El Entorno Real</span>
+                <h1>El Reto de Santa Marta</h1>
+                <h2>Calor Extremo</h2>
+                <ul class="info-list">
+                    <li><strong>Clima hostil:</strong> Temperaturas ambientales sostenidas de 23 °C a 32 °C.</li>
+                    <li><strong>El problema térmico:</strong> Evitar el <em>efecto invernadero</em> en el fotobiorreactor.</li>
+                    <li>Si la luz entra sin control, la temperatura interna escalará rápidamente por encima del límite letal (35 °C).</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 12. LOGICA INVERTIDA -->
+        <section class="slide" data-accent="warm" data-char="reactor">
+            <div class="card">
+                <span class="card-tag">La Modificación del Concepto (Nictinastia)</span>
+                <h1>Lógica Invertida</h1>
+                <h2>Páramo vs. Trópico</h2>
+                <div class="comparison">
+                    <div class="compare-box compare-cold">
+                        <h3>🏔️ El Frailejón</h3>
+                        <p>Cierra de <strong>noche</strong> (frío)<br>Abre de <strong>día</strong> (sol)</p>
+                    </div>
+                    <div class="compare-arrow">→</div>
+                    <div class="compare-box compare-hot">
+                        <h3>🌴 ALUNA (Sta. Marta)</h3>
+                        <p>Cierra de <strong>día</strong> (sol 38°C)<br>Abre de <strong>noche</strong> (fresco)</p>
+                    </div>
+                </div>
+                <p class="card-note">Invertimos la funcionalidad biológica original: usamos el mecanismo protector contra el calor, no contra el frío.</p>
+            </div>
+        </section>
+
+        <!-- 13. TRADUCCIÓN A INGENIERÍA -->
+        <section class="slide" data-accent="tropical" data-char="reactor">
+            <div class="card">
+                <span class="card-tag">Diseño del Biorreactor</span>
+                <h1>Arquitectura ALUNA</h1>
+                <h2>De Biología a Ingeniería</h2>
+                <div style="text-align:center; margin: 1.5rem 0;">
+                    <img src="ModeloFisico.jpeg" alt="Modelo Físico del Biorreactor" style="max-height: 250px; width: auto; border-radius: 12px; border: 2px solid rgba(255,255,255,0.15); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                </div>
+                <ul class="info-list">
+                    <li>Usaremos la estructura pasiva del Frailejón acoplada a un sistema de automatización para controlar a <em>Chlorella</em>.</li>
+                    <li>Un <strong>reactor de dos capas</strong> con movimiento mecánico para gestionar la entrada de sol.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 14. ESTRUCTURA FÍSICA -->
+        <section class="slide" data-accent="brown" data-char="reactor">
+            <div class="card">
+                <span class="card-tag">Ingeniería Estructural</span>
+                <h1>Traducción Física</h1>
+                <h2>Camisa Aislante y Reflector</h2>
+                <ul class="info-list">
+                    <li><strong>La Necromasa:</strong> Se traduce a una estructura física que envuelve el tanque principal, aislando termodinámicamente el cultivo.</li>
+                    <li><strong>La Pubescencia:</strong> Se traduce a un recubrimiento exterior con material de alto albedo (aluminio) para atajar la radiación antes de que entre.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 15. SERVOMECANISMO -->
+        <section class="slide" data-accent="blue" data-char="reactor">
+            <div class="card">
+                <span class="card-tag">Ingeniería Mecánica</span>
+                <h1>El Movimiento Foliar</h1>
+                <h2>Servomecanismo</h2>
+                <ul class="info-list">
+                    <li>La Nictinastia (abrir y cerrar hojas) se mecaniza mediante un <strong>servomotor</strong>.</li>
+                    <li>Este motor controla físicamente la apertura y cierre de la camisa aislante.</li>
+                    <li>Permite ajustar el aislamiento de forma completamente dinámica según el delta térmico (T ext vs T int).</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 16. SUPERVISOR DE HISTÉRESIS -->
+        <section class="slide" data-accent="teal" data-char="none">
+            <div class="card">
+                <span class="card-tag">Estrategia de Control · Nivel Superior</span>
+                <h1>El Cerebro Lógico</h1>
+                <h2>Supervisor de Histéresis</h2>
+                <p class="card-lead">Máquina de estados que decide el movimiento del servomecanismo:</p>
+                <div class="equation-box">
+                    <div class="eq-row"><span class="eq-state closed">s = 0 (cerrar)</span> → Si hay alta irradiancia solar o T<sub>ext</sub> &gt; T<sub>int</sub></div>
+                    <div class="eq-row"><span class="eq-state open">s = 1 (abrir)</span> → Si es de noche y T<sub>ext</sub> ≤ T<sub>int</sub></div>
+                </div>
+                <p class="card-note" style="margin-top: 1rem;">Decisión autónoma sin intervención humana basada en umbrales de luz y temperatura.</p>
+            </div>
+        </section>
+
+        <!-- 17. CONTROL FINO (PID) -->
+        <section class="slide" data-accent="blue" data-char="none">
+            <div class="card">
+                <span class="card-tag">Estrategia de Control · Nivel Inferior</span>
+                <h1>Control en Cascada</h1>
+                <h2>Controlador PID</h2>
+                <ul class="info-list">
+                    <li><strong>Lazo PID:</strong> Ajusta la potencia del módulo de refrigeración basándose en el error térmico.</li>
+                    <li><strong>Sintonía y Simulación:</strong> Las ganancias del controlador se diseñan y optimizan utilizando MATLAB/Simulink.</li>
+                    <li><strong>Objetivo:</strong> El sistema rechaza las perturbaciones externas (calor del sol) manteniendo estrictamente el Setpoint.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 18. PROTECCIÓN MERISTEMO -->
+        <section class="slide" data-accent="tropical" data-char="reactor">
+            <div class="card">
+                <span class="card-tag">Ejecución Práctica</span>
+                <h1>Módulo Peltier</h1>
+                <h2>Control de Setpoint</h2>
+                <ul class="info-list">
+                    <li>Traducimos la "Protección del Meristemo" a un <strong>Setpoint estricto de 28 °C</strong>.</li>
+                    <li>El módulo termoeléctrico (Peltier) actúa como apoyo de enfriamiento activo.</li>
+                    <li>Mantiene el medio alejado de la barrera letal garantizando la viabilidad biológica.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 19. CRONOGRAMA -->
+        <section class="slide" data-accent="warm" data-char="none">
+            <div class="card">
+                <span class="card-tag">Metodología CDIO (6 Semanas)</span>
+                <h1>Ruta de Innovación</h1>
+                <h2>De la Selva al Laboratorio</h2>
+                <ul class="info-list" style="font-size: 0.95rem;">
+                    <li><strong>Semana 1 (Conceive):</strong> Concepción botánica y Matriz de Biomímesis.</li>
+                    <li><strong>Semanas 2 y 3 (Design):</strong> Arquitectura de sensores, modelo matemático dinámico y simulación.</li>
+                    <li><strong>Semanas 4 y 5 (Implement):</strong> Diseño de controladores PID, integración mecánica y prototipo (PET/3D).</li>
+                    <li><strong>Semana 6 (Operate):</strong> Pruebas de campo, validación experimental y pitch en InnovAzul Caribe 2026.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 20. CONCLUSIONES -->
+        <section class="slide" data-accent="tropical" data-char="none">
+            <div class="card">
+                <span class="card-tag">Cierre</span>
+                <h1>Conclusiones</h1>
+                <h2>Impacto del Proyecto</h2>
+                <ul class="info-list">
+                    <li>La biomímesis permite diseñar fotobiorreactores energéticamente eficientes, resolviendo problemas de ingeniería modernos con tecnología evolutiva ancestral.</li>
+                    <li>La <strong>fusión de Biología y Control Automático</strong> es clave para el futuro sostenible del cultivo de biomasa en climas extremos.</li>
+                </ul>
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <h2 style="font-size: 2rem; color: #fff;">¡Gracias por su atención!</h2>
+                    <p class="card-lead">Abrimos el espacio para preguntas.</p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <div class="hud" id="hud">
+        <div class="hud-progress">
+            <div class="hud-progress-fill" id="progress-bar"></div>
+        </div>
+        <div class="hud-controls">
+            <button id="btn-print" class="hud-btn" aria-label="Exportar PDF" title="Exportar a PDF" style="margin-right: 15px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            </button>
+            <button id="btn-prev" class="hud-btn" aria-label="Anterior">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button id="btn-play-pause" class="hud-btn hud-btn-main" aria-label="Pausar">
+                <svg id="icon-pause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+                <svg id="icon-play" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="display:none"><polygon points="6,4 20,12 6,20"/></svg>
+            </button>
+            <button id="btn-next" class="hud-btn" aria-label="Siguiente">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+        </div>
+        <div class="hud-counter"><span id="slide-num">01</span><span class="hud-sep">/</span><span>20</span></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
