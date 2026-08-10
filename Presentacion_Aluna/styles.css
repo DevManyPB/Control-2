@@ -215,3 +215,36 @@ h1 {
     background: rgba(255,255,255,0.2);
     transform: translateY(-2px);
 }
+
+/* ========== TABLE STYLES ========== */
+.biomimesis-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #eee;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+.biomimesis-table th {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-color);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+.biomimesis-table td {
+    padding: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    vertical-align: middle;
+}
+.biomimesis-table tr:last-child td {
+    border-bottom: none;
+}
+.biomimesis-table tr:hover td {
+    background: rgba(255, 255, 255, 0.1);
+}
