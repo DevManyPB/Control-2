@@ -117,7 +117,8 @@ h1,h2,h3{font-family:'Space Grotesk',sans-serif}
 .split-layout .info-list{margin-top:0}
 
 /* ========== HUD ========== */
-.hud{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:10;display:flex;align-items:center;gap:20px;padding:12px 28px;border-radius:50px;background:rgba(10,15,26,.7);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.hud{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:10;display:flex;align-items:center;gap:20px;padding:12px 28px;border-radius:50px;background:rgba(10,15,26,.7);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 40px rgba(0,0,0,.4); opacity: 0.1; transition: opacity 0.4s ease;}
+.hud:hover{opacity: 1;}
 
 .hud-progress{width:160px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
 .hud-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#2d6a4f,#52b788);box-shadow:0 0 10px rgba(82,183,136,.4);border-radius:2px}
