@@ -184,6 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Character swap ---
         if (leavingChar !== enteringChar) {
             if (leavingChar && leavingChar !== 'none' && charEls[leavingChar]) {
+                anime.remove(charEls[leavingChar]);
                 anime({
                     targets: charEls[leavingChar],
                     opacity: 0,
@@ -194,6 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
             if (enteringChar && enteringChar !== 'none' && charEls[enteringChar]) {
+                anime.remove(charEls[enteringChar]);
                 anime({
                     targets: charEls[enteringChar],
                     opacity: [0, 1],
