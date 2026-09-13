@@ -140,9 +140,30 @@ def connect():
         if ser and ser.is_open:
             ser.close()
         ser = serial.Serial(port, 115200, timeout=1)
-        return jsonify({"status": "success"})
+        return jsonify({"status": "success", "port": port})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
+
+@app.route('/disconnect', methods=['POST'])
+def disconnect():
+    global ser, is_testing
+    try:
+        if ser and ser.is_open:
+            ser.write(b'X\n')
+            ser.close()
+    except Exception:
+        pass
+    ser = None
+    is_testing = False
+    return jsonify({"status": "success", "message": "Desconectado"})
+
+@app.route('/status')
+def get_status():
+    return jsonify({
+        "connected": ser is not None and ser.is_open,
+        "port": ser.port if (ser and ser.is_open) else None,
+        "is_testing": is_testing
+    })
 
 @app.route('/start', methods=['POST'])
 def start_test():
