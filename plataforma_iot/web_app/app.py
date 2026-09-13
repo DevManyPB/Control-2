@@ -5,6 +5,7 @@ import serial.tools.list_ports
 import threading
 import time
 import os
+import re
 import subprocess
 import numpy as np
 from scipy.optimize import curve_fit
@@ -31,6 +32,15 @@ recorded_data = {
     "servo_angle": []   # Ángulo Cortina Escudo Orbital (0° a 180°)
 }
 
+latest_readings = {
+    "temp1": None,
+    "temp2": None,
+    "pwm": 0,
+    "servo_angle": 0,
+    "time": 0.0,
+    "raw": ""
+}
+
 ser = None
 is_testing = False
 
@@ -50,32 +60,73 @@ control_config = {
 # HILO DE LECTURA SERIAL Y CONTROL PI EN TIEMPO REAL
 # ========================================================
 def read_serial():
-    global recorded_data, ser, is_testing, control_config
+    global recorded_data, ser, is_testing, control_config, latest_readings
     while True:
-        if ser and ser.is_open and is_testing:
+        if ser and ser.is_open:
             try:
                 line = ser.readline().decode('utf-8', errors='ignore').strip()
                 if line:
-                    parts = line.split(',')
-                    # Formato esperado: t, pwm, temp1, temp2, servo_angle
-                    if len(parts) >= 4:
-                        t = float(parts[0])
-                        p = float(parts[1])
-                        t1 = float(parts[2])
-                        t2 = float(parts[3])
-                        angle = float(parts[4]) if len(parts) >= 5 else control_config["current_servo"]
+                    latest_readings["raw"] = line
 
-                        # Filtro básico de lectura válida (ignorar lecturas de desconexión transitoria)
-                        if t1 > -50 and t1 < 80:
-                            recorded_data["time"].append(t)
-                            recorded_data["pwm"].append(p)
-                            recorded_data["temp1"].append(t1)
-                            recorded_data["temp2"].append(t2)
-                            recorded_data["servo_angle"].append(angle)
+                    # CASO 1: Formato CSV estándar (esp32_firmware.ino / step_response.ino)
+                    if ',' in line:
+                        parts = line.split(',')
+                        if len(parts) >= 3:
+                            try:
+                                t = float(parts[0])
+                                p = float(parts[1]) if len(parts) >= 2 else 0.0
+                                t1 = float(parts[2])
+                                t2 = float(parts[3]) if len(parts) >= 4 else -127.0
+                                angle = float(parts[4]) if len(parts) >= 5 else control_config["current_servo"]
 
-                            # Si está en modo PI Automático, ejecutar algoritmo de control
-                            if control_config["mode"] == "pi_auto":
-                                ejecutar_control_pi(t1, t2)
+                                latest_readings["time"] = t
+                                latest_readings["pwm"] = p
+                                latest_readings["temp1"] = t1
+                                latest_readings["temp2"] = t2
+                                latest_readings["servo_angle"] = angle
+
+                                recorded_data["time"].append(t)
+                                recorded_data["pwm"].append(p)
+                                recorded_data["temp1"].append(t1)
+                                recorded_data["temp2"].append(t2)
+                                recorded_data["servo_angle"].append(angle)
+
+                                if control_config["mode"] == "pi_auto" and t1 > -50 and t1 < 80:
+                                    ejecutar_control_pi(t1, t2)
+                            except ValueError:
+                                pass
+
+                    # CASO 2: Formato Diagnóstico (test_sensores.ino)
+                    elif "S1 (" in line or "S2 (" in line:
+                        t1 = None
+                        t2 = None
+                        if "S1 (" in line:
+                            s1_part = line.split("S1")[1].split("|")[0]
+                            if "DESCONECTADO" in s1_part:
+                                t1 = -127.0
+                            else:
+                                m = re.search(r"[-+]?\d*\.\d+|\d+", s1_part)
+                                if m: t1 = float(m.group())
+
+                        if "S2 (" in line:
+                            s2_part = line.split("S2")[1]
+                            if "DESCONECTADO" in s2_part:
+                                t2 = -127.0
+                            else:
+                                m = re.search(r"[-+]?\d*\.\d+|\d+", s2_part)
+                                if m: t2 = float(m.group())
+
+                        if t1 is not None:
+                            latest_readings["temp1"] = t1
+                        if t2 is not None:
+                            latest_readings["temp2"] = t2
+
+                        now_t = len(recorded_data["time"]) * 1.5
+                        recorded_data["time"].append(now_t)
+                        recorded_data["pwm"].append(0)
+                        recorded_data["temp1"].append(t1 if t1 is not None else -127.0)
+                        recorded_data["temp2"].append(t2 if t2 is not None else -127.0)
+                        recorded_data["servo_angle"].append(0)
             except Exception as e:
                 pass
         time.sleep(0.05)
@@ -241,6 +292,7 @@ def config_pi():
 def get_data():
     return jsonify({
         "telemetry": recorded_data,
+        "latest": latest_readings,
         "control": control_config
     })
 

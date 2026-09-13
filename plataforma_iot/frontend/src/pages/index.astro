@@ -1295,24 +1295,28 @@
                 const t = payload.telemetry;
                 const c = payload.control;
 
-                if (t.time && t.time.length > 0) {
-                    const lastT1 = t.temp1[t.temp1.length - 1];
-                    const lastT2 = t.temp2[t.temp2.length - 1];
-                    const lastPwm = t.pwm[t.pwm.length - 1];
-                    const lastServo = t.servo_angle[t.servo_angle.length - 1];
+                const lastT1 = (t.time && t.time.length > 0) ? t.temp1[t.temp1.length - 1] : (payload.latest ? payload.latest.temp1 : null);
+                const lastT2 = (t.time && t.time.length > 0) ? t.temp2[t.temp2.length - 1] : (payload.latest ? payload.latest.temp2 : null);
+                const lastPwm = (t.time && t.time.length > 0) ? t.pwm[t.pwm.length - 1] : (payload.latest ? payload.latest.pwm : 0);
+                const lastServo = (t.time && t.time.length > 0) ? t.servo_angle[t.servo_angle.length - 1] : (payload.latest ? payload.latest.servo_angle : 0);
 
-                    document.getElementById('val-t1').innerHTML = `${lastT1.toFixed(1)}<span class="text-lg text-slate-500 font-normal">°C</span>`;
-                    document.getElementById('val-t2').innerHTML = `${lastT2.toFixed(1)}<span class="text-lg text-slate-500 font-normal">°C</span>`;
-                    document.getElementById('twin-temp').textContent = `${lastT1.toFixed(1)}°C`;
+                if (lastT1 !== null && lastT1 !== undefined) {
+                    if (lastT1 <= -100) {
+                        document.getElementById('val-t1').innerHTML = `-127<span class="text-lg text-rose-500 font-normal">°C</span>`;
+                        document.getElementById('twin-temp').textContent = `-127°C`;
+                    } else {
+                        document.getElementById('val-t1').innerHTML = `${lastT1.toFixed(1)}<span class="text-lg text-slate-500 font-normal">°C</span>`;
+                        document.getElementById('twin-temp').textContent = `${lastT1.toFixed(1)}°C`;
+                    }
 
-                    const pctT1 = Math.max(0, Math.min(100, ((lastT1 - 15) / 20) * 100));
+                    const pctT1 = lastT1 <= -100 ? 0 : Math.max(0, Math.min(100, ((lastT1 - 15) / 20) * 100));
                     document.getElementById('gauge-t1-ring').style.strokeDashoffset = 251.2 - (pctT1 / 100) * 251.2;
 
-                    const pctT2 = Math.max(0, Math.min(100, ((lastT2 - 15) / 20) * 100));
-                    document.getElementById('gauge-t2-ring').style.strokeDashoffset = 251.2 - (pctT2 / 100) * 251.2;
-
                     const badge = document.getElementById('badge-optimo');
-                    if (lastT1 >= 20.0 && lastT1 <= 22.5) {
+                    if (lastT1 <= -100) {
+                        badge.className = "px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-950 text-rose-300 border border-rose-700 animate-pulse";
+                        badge.textContent = "Error: Bus 15 Caído";
+                    } else if (lastT1 >= 20.0 && lastT1 <= 22.5) {
                         badge.className = "px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-700";
                         badge.textContent = "Óptimo T. chuii";
                     } else if (lastT1 > 22.5 && lastT1 <= 25.0) {
@@ -1325,7 +1329,23 @@
                         badge.className = "px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-950 text-blue-300 border border-blue-700";
                         badge.textContent = "Subóptimo Frío";
                     }
+                }
 
+                if (lastT2 !== null && lastT2 !== undefined) {
+                    if (lastT2 <= -100) {
+                        document.getElementById('val-t2').innerHTML = `-127<span class="text-lg text-rose-500 font-normal">°C</span>`;
+                    } else {
+                        document.getElementById('val-t2').innerHTML = `${lastT2.toFixed(1)}<span class="text-lg text-slate-500 font-normal">°C</span>`;
+                    }
+                    const pctT2 = lastT2 <= -100 ? 0 : Math.max(0, Math.min(100, ((lastT2 - 15) / 20) * 100));
+                    document.getElementById('gauge-t2-ring').style.strokeDashoffset = 251.2 - (pctT2 / 100) * 251.2;
+                }
+
+                if (lastT1 !== null || lastT2 !== null) {
+                    updateSensorDiagnostics(lastT1, lastT2);
+                }
+
+                if (t.time && t.time.length > 0) {
                     if (c && c.mode === "pi_auto") {
                         updatePwmUI(lastPwm);
                         updateServoUI(lastServo);
