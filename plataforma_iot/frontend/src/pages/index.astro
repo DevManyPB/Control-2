@@ -1665,14 +1665,17 @@
         }
 
         // Botones de Comando Serial Rápido para Sensores
-        document.getElementById('btn-test-s1').addEventListener('click', () => {
+        document.getElementById('btn-test-s1').addEventListener('click', async () => {
             showToast("Modo Sensor 1", "Monitoreando exclusivamente el bus D15 (Agua)", "🧪");
+            try { await fetch(`${BACKEND_URL}/api/send_cmd`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({cmd: '1'}) }); } catch(e){}
         });
-        document.getElementById('btn-test-s2').addEventListener('click', () => {
+        document.getElementById('btn-test-s2').addEventListener('click', async () => {
             showToast("Modo Sensor 2", "Monitoreando exclusivamente el bus D13 (Ambiente)", "🧪");
+            try { await fetch(`${BACKEND_URL}/api/send_cmd`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({cmd: '2'}) }); } catch(e){}
         });
-        document.getElementById('btn-test-both').addEventListener('click', () => {
+        document.getElementById('btn-test-both').addEventListener('click', async () => {
             showToast("Modo Dual", "Monitoreando ambos sensores simultáneamente", "🔄");
+            try { await fetch(`${BACKEND_URL}/api/send_cmd`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({cmd: 'B'}) }); } catch(e){}
         });
 
         // =================================================================

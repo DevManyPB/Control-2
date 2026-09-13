@@ -7,11 +7,14 @@ import time
 import os
 import re
 import subprocess
+from collections import deque
 import numpy as np
 from scipy.optimize import curve_fit
 
 app = Flask(__name__)
 CORS(app)
+
+serial_logs = deque(maxlen=50)
 
 # ========================================================
 # RUTAS DE COMPILACIÓN ARDUINO-CLI Y FIRMWARE
@@ -66,6 +69,7 @@ def read_serial():
             try:
                 line = ser.readline().decode('utf-8', errors='ignore').strip()
                 if line:
+                    serial_logs.append(line)
                     latest_readings["raw"] = line
 
                     # CASO 1: Formato CSV estándar (esp32_firmware.ino / step_response.ino)
@@ -102,18 +106,24 @@ def read_serial():
                         t2 = None
                         if "S1 (" in line:
                             s1_part = line.split("S1")[1].split("|")[0]
-                            if "DESCONECTADO" in s1_part:
+                            if "DESCONECTADO" in s1_part or "-127" in s1_part:
                                 t1 = -127.0
+                            elif "85" in s1_part or "INICIALIZANDO" in s1_part:
+                                t1 = 85.0
                             else:
-                                m = re.search(r"[-+]?\d*\.\d+|\d+", s1_part)
+                                val_str = s1_part.split(":")[-1] if ":" in s1_part else s1_part
+                                m = re.search(r"[-+]?\d+(?:\.\d+)?", val_str)
                                 if m: t1 = float(m.group())
 
                         if "S2 (" in line:
                             s2_part = line.split("S2")[1]
-                            if "DESCONECTADO" in s2_part:
+                            if "DESCONECTADO" in s2_part or "-127" in s2_part:
                                 t2 = -127.0
+                            elif "85" in s2_part or "INICIALIZANDO" in s2_part:
+                                t2 = 85.0
                             else:
-                                m = re.search(r"[-+]?\d*\.\d+|\d+", s2_part)
+                                val_str = s2_part.split(":")[-1] if ":" in s2_part else s2_part
+                                m = re.search(r"[-+]?\d+(?:\.\d+)?", val_str)
                                 if m: t2 = float(m.group())
 
                         if t1 is not None:
@@ -274,6 +284,15 @@ def set_servo():
         return jsonify({"status": "success", "angle": angle})
     return jsonify({"status": "error", "message": "Puerto serie no conectado"})
 
+@app.route('/api/send_cmd', methods=['POST'])
+def send_cmd():
+    global ser
+    cmd = request.json.get('cmd', '') if request.json else ''
+    if ser and ser.is_open and cmd:
+        ser.write(f"{cmd}\n".encode('utf-8'))
+        return jsonify({"status": "success", "sent": cmd})
+    return jsonify({"status": "error", "message": "Puerto serie no conectado o comando vacio"})
+
 @app.route('/config_pi', methods=['GET', 'POST'])
 def config_pi():
     global control_config
@@ -293,7 +312,8 @@ def get_data():
     return jsonify({
         "telemetry": recorded_data,
         "latest": latest_readings,
-        "control": control_config
+        "control": control_config,
+        "serial_logs": list(serial_logs)
     })
 
 # ========================================================

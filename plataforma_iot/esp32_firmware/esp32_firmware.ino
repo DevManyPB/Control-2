@@ -45,6 +45,8 @@ void setup() {
   
   sensorAgua.setWaitForConversion(true);
   sensorAire.setWaitForConversion(true);
+  sensorAgua.setResolution(10);
+  sensorAire.setResolution(10);
   
   // Configuración PWM Peltier (1 kHz, 8 bits de resolución: 0-255)
   ledcAttach(PELTIER_PWM_PIN, 1000, 8);
@@ -104,12 +106,21 @@ void loop() {
     if (millis() - last_read >= 2000) {
       last_read = millis();
       
-      // Lectura no bloqueante de temperaturas
+      // Lectura de temperaturas
       sensorAgua.requestTemperatures();
       sensorAire.requestTemperatures();
       
       float temp1 = sensorAgua.getTempCByIndex(0);
       float temp2 = sensorAire.getTempCByIndex(0);
+
+      // Si ambos sensores están conectados en paralelo al pin D15
+      if (sensorAgua.getDeviceCount() >= 2 && (temp2 == DEVICE_DISCONNECTED_C || temp2 <= -100.0)) {
+        temp2 = sensorAgua.getTempCByIndex(1);
+      }
+      // Si solo hay un sensor y se conectó al pin D13 en vez de D15
+      if ((temp1 == DEVICE_DISCONNECTED_C || temp1 <= -100.0) && temp2 > -100.0 && temp2 != DEVICE_DISCONNECTED_C) {
+        temp1 = temp2;
+      }
       
       float t = (millis() - start_time) / 1000.0;
       
