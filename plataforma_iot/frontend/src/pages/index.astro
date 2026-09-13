@@ -162,7 +162,7 @@
             <div class="flex items-center gap-3">
                 
                 <!-- Botón de Guía de Uso -->
-                <button id="btn-open-guide" class="px-4 py-2 bg-slate-900/90 hover:bg-slate-800 text-teal-300 border border-teal-500/30 hover:border-teal-400 text-xs font-mono font-bold rounded-xl transition flex items-center gap-2 shadow-lg">
+                <button id="btn-open-guide" onclick="openGuide()" class="px-4 py-2 bg-slate-900/90 hover:bg-slate-800 text-teal-300 border border-teal-500/30 hover:border-teal-400 text-xs font-mono font-bold rounded-xl transition flex items-center gap-2 shadow-lg cursor-pointer">
                     <span>📖</span> GUÍA DE OPERACIÓN
                 </button>
 
@@ -467,7 +467,7 @@
     <!-- ================================================================= -->
     <!-- MODAL: GUÍA DE OPERACIÓN Y PROTOCOLO PASO A PASO -->
     <!-- ================================================================= -->
-    <div id="guide-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="guide-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/85 backdrop-blur-md">
         <div class="hud-card border border-teal-500/30 w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden bg-slate-950/95">
             
             <!-- Encabezado del Modal -->
@@ -479,7 +479,7 @@
                         <p class="text-xs text-slate-400 font-mono">Fotobiorreactor ALUNA PBR-02 &middot; Cepa Tetraselmis chuii</p>
                     </div>
                 </div>
-                <button id="btn-close-guide" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition text-sm font-bold">✕</button>
+                <button id="btn-close-guide" onclick="closeGuide()" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition text-sm font-bold cursor-pointer">✕</button>
             </div>
 
             <!-- Contenido con Tabs -->
@@ -599,7 +599,7 @@
 
             <!-- Pie del Modal -->
             <div class="px-7 py-4 border-t border-white/10 bg-slate-900/60 flex justify-end">
-                <button id="btn-close-guide-footer" class="px-5 py-2 bg-teal-600 hover:bg-teal-500 text-white font-mono text-xs font-bold rounded-xl transition">ENTENDIDO, VOLVER AL TABLERO</button>
+                <button id="btn-close-guide-footer" onclick="closeGuide()" class="px-5 py-2 bg-teal-600 hover:bg-teal-500 text-white font-mono text-xs font-bold rounded-xl transition cursor-pointer">ENTENDIDO, VOLVER AL TABLERO</button>
             </div>
 
         </div>
@@ -1026,16 +1026,34 @@
         // =================================================================
         // MANEJO DEL MODAL DE LA GUÍA DE OPERACIÓN
         // =================================================================
-        const guideModal = document.getElementById('guide-modal');
-        document.getElementById('btn-open-guide').addEventListener('click', () => {
-            guideModal.classList.remove('opacity-0', 'pointer-events-none');
-        });
+        window.openGuide = function() {
+            const m = document.getElementById('guide-modal');
+            if (m) {
+                m.classList.remove('hidden');
+                m.classList.add('flex');
+            }
+        };
 
-        function closeGuide() {
-            guideModal.classList.add('opacity-0', 'pointer-events-none');
+        window.closeGuide = function() {
+            const m = document.getElementById('guide-modal');
+            if (m) {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+            }
+        };
+
+        const guideModal = document.getElementById('guide-modal');
+        if (guideModal) {
+            guideModal.addEventListener('click', (e) => {
+                if (e.target.id === 'guide-modal') window.closeGuide();
+            });
         }
-        document.getElementById('btn-close-guide').addEventListener('click', closeGuide);
-        document.getElementById('btn-close-guide-footer').addEventListener('click', closeGuide);
+        const openBtn = document.getElementById('btn-open-guide');
+        if (openBtn) openBtn.addEventListener('click', window.openGuide);
+        const closeBtn = document.getElementById('btn-close-guide');
+        if (closeBtn) closeBtn.addEventListener('click', window.closeGuide);
+        const closeBtnFtr = document.getElementById('btn-close-guide-footer');
+        if (closeBtnFtr) closeBtnFtr.addEventListener('click', window.closeGuide);
 
         // Tabs del Modal
         document.querySelectorAll('.guide-tab-btn').forEach(btn => {
