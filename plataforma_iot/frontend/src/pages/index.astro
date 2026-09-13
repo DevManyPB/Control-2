@@ -1031,8 +1031,16 @@
         // =================================================================
         // INICIALIZACIÓN DE APACHE ECHARTS
         // =================================================================
-        const chartMain = echarts.init(document.getElementById('echart-main'));
-        const chartAct = echarts.init(document.getElementById('echart-actuators'));
+        let chartMain = null;
+        let chartAct = null;
+        try {
+            const elMain = document.getElementById('echart-main');
+            if (elMain) chartMain = echarts.init(elMain);
+            const elAct = document.getElementById('echart-actuators');
+            if (elAct) chartAct = echarts.init(elAct);
+        } catch(e) {
+            console.error("ECharts init error:", e);
+        }
 
         const optionMain = {
             backgroundColor: 'transparent',
@@ -1056,7 +1064,7 @@
                 axisLabel: { color: '#64748b', fontFamily: 'JetBrains Mono' },
                 splitLine: { show: false }
             },
-            yaxis: {
+            yAxis: {
                 type: 'value',
                 axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.1)' } },
                 axisLabel: { color: '#64748b', fontFamily: 'JetBrains Mono', formatter: '{value} °C' },
@@ -1118,7 +1126,7 @@
                 axisLabel: { color: '#64748b', fontFamily: 'JetBrains Mono' },
                 splitLine: { show: false }
             },
-            yaxis: [
+            yAxis: [
                 {
                     type: 'value',
                     name: 'PWM',
@@ -1157,12 +1165,17 @@
             ]
         };
 
-        chartMain.setOption(optionMain);
-        chartAct.setOption(optionAct);
+        try {
+            if (chartMain) chartMain.setOption(optionMain);
+            if (chartAct) chartAct.setOption(optionAct);
+        } catch(e) {
+            console.error("ECharts setOption error:", e);
+        }
 
         window.addEventListener('resize', () => {
-            chartMain.resize();
-            chartAct.resize();
+            if (chartMain) chartMain.resize();
+            if (chartAct) chartAct.resize();
+            if (chartSensors) chartSensors.resize();
         });
 
         // =================================================================
@@ -1321,22 +1334,26 @@
                     const timeLabels = t.time.map(s => Math.round(s) + 's');
                     const setpointLine = t.time.map(() => 21.0);
 
-                    chartMain.setOption({
-                        xAxis: { data: timeLabels },
-                        series: [
-                            { name: 'T. Reactor (Agua)', data: t.temp1 },
-                            { name: 'T. Ambiente (Disipador)', data: t.temp2 },
-                            { name: 'Consigna 21.0°C', data: setpointLine }
-                        ]
-                    });
+                    if (chartMain) {
+                        chartMain.setOption({
+                            xAxis: { data: timeLabels },
+                            series: [
+                                { name: 'T. Reactor (Agua)', data: t.temp1 },
+                                { name: 'T. Ambiente (Disipador)', data: t.temp2 },
+                                { name: 'Consigna 21.0°C', data: setpointLine }
+                            ]
+                        });
+                    }
 
-                    chartAct.setOption({
-                        xAxis: { data: timeLabels },
-                        series: [
-                            { name: 'PWM Peltier', data: t.pwm },
-                            { name: 'Ángulo Escudo', data: t.servo_angle }
-                        ]
-                    });
+                    if (chartAct) {
+                        chartAct.setOption({
+                            xAxis: { data: timeLabels },
+                            series: [
+                                { name: 'PWM Peltier', data: t.pwm },
+                                { name: 'Ángulo Escudo', data: t.servo_angle }
+                            ]
+                        });
+                    }
 
                     // Actualizar métricas del Banco de Diagnóstico de Sensores
                     updateSensorDiagnostics(lastT1, lastT2);
@@ -1518,7 +1535,7 @@
                     axisLabel: { color: '#64748b', fontFamily: 'JetBrains Mono' },
                     splitLine: { show: false }
                 },
-                yaxis: {
+                yAxis: {
                     type: 'value',
                     axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.1)' } },
                     axisLabel: { color: '#64748b', fontFamily: 'JetBrains Mono', formatter: '{value} °C' },
@@ -1543,7 +1560,11 @@
                     }
                 ]
             };
-            chartSensors.setOption(optionSensors);
+            try {
+                chartSensors.setOption(optionSensors);
+            } catch(e) {
+                console.error("chartSensors.setOption error:", e);
+            }
         }
 
         function updateSensorDiagnostics(t1, t2) {
