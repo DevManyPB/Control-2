@@ -1,329 +1,691 @@
 ---
 ---
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
-    <title>ALUNA PBR-02 | Control Térmico Biomimético</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALUNA PBR-02 | Digital Twin & Thermal Tuner</title>
     <script is:inline src="https://cdn.tailwindcss.com"></script>
     <script is:inline src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            900: '#064e3b',
+                            950: '#022c22',
+                        },
+                        cyber: {
+                            blue: '#00f0ff',
+                            dark: '#050811',
+                            card: '#0b1120',
+                            border: 'rgba(255, 255, 255, 0.07)',
+                        }
+                    }
+                }
+            }
         }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0b0f19; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+    </script>
+    <style>
+        body {
+            background-color: #040711;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.08) 0px, transparent 50%),
+                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+        }
+        .cyber-card {
+            background: rgba(11, 17, 32, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+        }
+        .glow-emerald {
+            box-shadow: 0 0 24px -4px rgba(16, 185, 129, 0.35);
+        }
+        .glow-cyan {
+            box-shadow: 0 0 24px -4px rgba(6, 182, 212, 0.35);
+        }
+        .glow-purple {
+            box-shadow: 0 0 24px -4px rgba(168, 85, 247, 0.35);
+        }
+        /* Sliders de alta tecnología */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: #1e293b;
+            border-radius: 9999px;
+            height: 6px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #2dd4bf;
+            cursor: pointer;
+            box-shadow: 0 0 12px #2dd4bf;
+            border: 2px solid #0f172a;
+            transition: all 0.15s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 16px #2dd4bf;
+        }
+        /* Animación suave de burbujas en el reactor */
+        @keyframes bubble {
+            0% { transform: translateY(0) scale(1); opacity: 0.2; }
+            50% { opacity: 0.8; }
+            100% { transform: translateY(-40px) scale(1.3); opacity: 0; }
+        }
+        .animate-bubble-1 { animation: bubble 2.4s infinite ease-in; }
+        .animate-bubble-2 { animation: bubble 3.1s infinite ease-in 0.8s; }
+        .animate-bubble-3 { animation: bubble 1.9s infinite ease-in 1.4s; }
+        /* Toast flotante */
+        #toast {
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+        }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen">
+<body class="text-slate-200 min-h-screen flex flex-col font-sans antialiased">
     
-    <!-- Barra Superior / Header -->
-    <header class="glass-panel sticky top-0 z-50 border-b border-slate-800 shadow-2xl">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex flex-wrap justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-xl bg-teal-500/10 border border-teal-400/30 flex items-center justify-center shadow-[0_0_20px_rgba(20,184,166,0.25)]">
-                    <span class="text-2xl">🌿</span>
+    <!-- Toast de Notificaciones Flotante -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="cyber-card border border-teal-500/40 px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 bg-slate-900/95">
+            <span id="toast-icon" class="text-xl">✨</span>
+            <div>
+                <p id="toast-title" class="text-xs font-bold text-white uppercase tracking-wider">Notificación</p>
+                <p id="toast-msg" class="text-xs text-slate-300">Mensaje del sistema</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header / Mission Control Bar -->
+    <header class="cyber-card sticky top-0 z-40 border-b border-white/10 px-6 py-3.5">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            
+            <!-- Logo y Especie -->
+            <div class="flex items-center gap-3.5">
+                <div class="relative flex items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-br from-teal-500/20 to-emerald-600/10 border border-teal-500/40 glow-emerald">
+                    <span class="text-2xl">🌱</span>
+                    <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                        <span id="pulse-dot" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-teal-500"></span>
+                    </span>
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <h1 class="text-xl font-extrabold tracking-tight text-white">ALUNA <span class="text-teal-400">PBR-02</span></h1>
-                        <span class="px-2 py-0.5 text-[10px] font-mono bg-teal-950 text-teal-300 border border-teal-800/60 rounded-full font-bold">Tetraselmis chuii</span>
+                        <h1 class="text-lg font-extrabold tracking-tight text-white">ALUNA <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-400">PBR-02</span></h1>
+                        <span class="px-2 py-0.5 text-[10px] font-mono font-bold bg-teal-950/80 text-teal-300 border border-teal-700/50 rounded-md">T. chuii</span>
+                        <span class="px-2 py-0.5 text-[10px] font-mono bg-purple-950/80 text-purple-300 border border-purple-700/50 rounded-md">Frailejón Bio-Control</span>
                     </div>
-                    <p class="text-xs text-slate-400 tracking-wider">Control Térmico Cuántico & Escudo Orbital Biomimético (Frailejón)</p>
+                    <p class="text-[11px] text-slate-400 font-medium">Biorreactor Térmico Cuántico &middot; Universidad del Magdalena</p>
                 </div>
+            </div>
+
+            <!-- Centro: Barra de Estado de Conexión Serial -->
+            <div class="flex items-center gap-2.5 bg-slate-950/90 p-1.5 rounded-xl border border-white/10 shadow-inner">
+                <div class="flex items-center gap-2 px-3 py-1 bg-slate-900/80 rounded-lg border border-white/5">
+                    <div id="status-indicator" class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]"></div>
+                    <span id="status-text" class="text-xs font-mono font-medium text-slate-400">Desconectado</span>
+                </div>
+                <select id="ports" class="bg-slate-900 text-teal-300 text-xs rounded-lg px-3 py-1.5 font-mono border border-slate-700 outline-none focus:border-teal-500 cursor-pointer"></select>
+                <button id="btn-refresh" class="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition" title="Refrescar puertos seriales">🔄</button>
+                <button id="btn-connect" class="px-4 py-1.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white text-xs font-bold rounded-lg shadow-lg transition">CONECTAR</button>
             </div>
             
-            <!-- Conexión Serial -->
-            <div class="flex items-center gap-3 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800">
-                <div class="flex items-center gap-2 pr-2 border-r border-slate-800">
-                    <div id="status-indicator" class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.7)]"></div>
-                    <span id="status-text" class="text-xs font-semibold text-slate-400 font-mono">Desconectado</span>
-                </div>
-                <select id="ports" class="bg-slate-950 border border-slate-700 text-teal-300 text-xs rounded-lg px-2.5 py-1.5 font-mono outline-none focus:border-teal-500"></select>
-                <button id="btn-refresh" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition" title="Refrescar puertos">🔄</button>
-                <button id="btn-connect" class="px-4 py-1.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-lg shadow-[0_0_12px_rgba(13,148,136,0.4)] transition">CONECTAR</button>
-            </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-6 py-6 space-y-6">
+    <!-- Contenido Principal -->
+    <main class="max-w-7xl mx-auto px-6 py-6 space-y-6 flex-1 w-full">
 
-        <!-- Métricas Principales en Tiempo Real -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="glass-panel p-4 rounded-xl border-l-4 border-teal-400">
-                <div class="flex justify-between items-start">
-                    <span class="text-xs text-slate-400 uppercase font-semibold">T. Agua (Reactor)</span>
-                    <span id="badge-estado" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">En Espera</span>
+        <!-- ========================================================= -->
+        <!-- SECCIÓN 1: GEMELO DIGITAL & ESPECTRO BIOLÓGICO -->
+        <!-- ========================================================= -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Gemelo Digital Interactivo (SVG) -->
+            <div class="lg:col-span-4 cyber-card p-5 rounded-2xl flex flex-col justify-between relative overflow-hidden border border-white/10">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <span class="text-[10px] font-mono uppercase tracking-widest text-teal-400 font-bold">Gemelo Digital 3D</span>
+                        <h3 class="text-sm font-bold text-white">Estado del Fotobiorreactor</h3>
+                    </div>
+                    <span id="curtain-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold font-mono bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        100% Fotosíntesis
+                    </span>
                 </div>
-                <div class="text-3xl font-black text-teal-400 mt-1 font-mono" id="val_t1">--.- °C</div>
-                <div class="text-[11px] text-slate-500 mt-1">Consigna Óptima: <strong class="text-slate-300">21.0 °C</strong> (20-22 °C)</div>
-            </div>
 
-            <div class="glass-panel p-4 rounded-xl border-l-4 border-emerald-500">
-                <span class="text-xs text-slate-400 uppercase font-semibold">T. Ambiente / Disipador</span>
-                <div class="text-3xl font-black text-emerald-400 mt-1 font-mono" id="val_t2">--.- °C</div>
-                <div class="text-[11px] text-slate-500 mt-1">Monitoreo Sensor 2 (D13)</div>
-            </div>
+                <!-- Ilustración SVG del Reactor y Escudo Rotatorio -->
+                <div class="relative w-full h-56 flex items-center justify-center my-2">
+                    
+                    <!-- Fondo de Radiación Solar / Lámpara -->
+                    <div class="absolute right-4 top-6 flex flex-col items-center opacity-80 pointer-events-none">
+                        <div class="text-3xl animate-pulse">☀️</div>
+                        <span class="text-[9px] font-mono text-amber-300 font-bold mt-1">Luz (4000 lux)</span>
+                        <div class="w-20 h-0.5 bg-gradient-to-l from-amber-400/40 to-transparent mt-1"></div>
+                    </div>
 
-            <div class="glass-panel p-4 rounded-xl border-l-4 border-cyan-500">
-                <div class="flex justify-between items-start">
-                    <span class="text-xs text-slate-400 uppercase font-semibold">Peltier (Potencia)</span>
-                    <span id="pwm_percent" class="text-xs font-mono font-bold text-cyan-300">0%</span>
+                    <!-- El Tanque / Botella -->
+                    <div class="relative w-28 h-48 rounded-3xl border-2 border-cyan-400/40 bg-gradient-to-b from-teal-950/40 via-emerald-950/70 to-teal-900/90 shadow-[0_0_30px_rgba(20,184,166,0.2)] overflow-hidden flex flex-col justify-end p-2">
+                        <!-- Nivel Líquido con Microalgas -->
+                        <div class="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-emerald-600/60 to-teal-500/30 rounded-b-2xl">
+                            <!-- Burbujas ascendentes -->
+                            <div class="absolute bottom-2 left-6 w-2 h-2 rounded-full bg-teal-300/40 animate-bubble-1"></div>
+                            <div class="absolute bottom-4 right-8 w-1.5 h-1.5 rounded-full bg-emerald-200/50 animate-bubble-2"></div>
+                            <div class="absolute bottom-1 left-12 w-2.5 h-2.5 rounded-full bg-teal-100/30 animate-bubble-3"></div>
+                        </div>
+
+                        <!-- Sonda Sensor DS18B20 sumergida -->
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-32 bg-slate-300 rounded-b-full shadow-md z-10 border border-slate-500">
+                            <div class="w-3 h-4 bg-slate-700 rounded-full -ml-[3px] mt-28 border border-teal-400"></div>
+                        </div>
+
+                        <!-- Temperatura en Tiempo Real superpuesta -->
+                        <div class="relative z-20 text-center pb-2">
+                            <span class="text-[10px] font-mono text-slate-300 uppercase block font-semibold">T. Cultivo</span>
+                            <span id="reactor-svg-temp" class="text-lg font-extrabold font-mono text-teal-200 drop-shadow">--.-°C</span>
+                        </div>
+                    </div>
+
+                    <!-- Placa de Cobre + Peltier (Lado Izquierdo) -->
+                    <div class="absolute -left-1 flex items-center">
+                        <div class="w-3 h-24 bg-amber-600/90 rounded-l-md border border-amber-400/60 shadow-lg" title="Placa de Cobre"></div>
+                        <div class="w-4 h-16 bg-slate-200 rounded-r-sm border border-slate-400 shadow-md flex items-center justify-center" title="Peltier TEC1-12706">
+                            <span class="text-[8px] font-black text-slate-800 -rotate-90">TEC1</span>
+                        </div>
+                    </div>
+
+                    <!-- Escudo Orbital Reflectivo (Gira según el ángulo del servo) -->
+                    <div id="orbital-shield-graphic" class="absolute w-36 h-48 pointer-events-none transition-transform duration-500 ease-out flex items-center justify-end" style="transform: rotate(0deg);">
+                        <!-- Hoja de Tela Blanca Reflectiva -->
+                        <div class="w-5 h-44 bg-white/95 rounded-r-2xl border-2 border-slate-300 shadow-[0_0_20px_rgba(255,255,255,0.7)] flex flex-col justify-around items-center py-2">
+                            <div class="w-1 h-3 bg-slate-400/40 rounded-full"></div>
+                            <div class="w-1 h-8 bg-slate-400/40 rounded-full"></div>
+                            <div class="w-1 h-3 bg-slate-400/40 rounded-full"></div>
+                        </div>
+                    </div>
+
                 </div>
-                <div class="text-3xl font-black text-cyan-400 mt-1 font-mono" id="val_pwm">0 <span class="text-xs text-slate-500 font-normal">/255</span></div>
-                <div class="text-[11px] text-slate-500 mt-1">Potencia: <span id="val_watts" class="text-slate-300 font-mono">0 W</span> aprox.</div>
+
+                <!-- Barra de Estado del Escudo -->
+                <div class="bg-slate-950/60 rounded-xl p-2.5 border border-white/5 flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Posición Escudo:</span>
+                    <span id="orbital-angle-display" class="font-mono font-bold text-purple-400">0° (Fotosíntesis Libre)</span>
+                </div>
             </div>
 
-            <div class="glass-panel p-4 rounded-xl border-l-4 border-purple-500">
-                <div class="flex justify-between items-start">
-                    <span class="text-xs text-slate-400 uppercase font-semibold">Escudo Frailejón</span>
-                    <span id="shield_status" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800">Abierto</span>
+            <!-- Espectro Biológico & KPIs Térmicos -->
+            <div class="lg:col-span-8 flex flex-col justify-between space-y-4">
+                
+                <!-- Barra Espectro Térmico de Tetraselmis chuii -->
+                <div class="cyber-card p-5 rounded-2xl border border-white/10">
+                    <div class="flex justify-between items-center mb-2.5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-bold text-white">Espectro Térmico de Seguridad</span>
+                            <span class="text-xs text-slate-400 font-mono">Tetraselmis chuii</span>
+                        </div>
+                        <span id="kpi-status-badge" class="px-3 py-0.5 rounded-full text-xs font-bold font-mono bg-slate-800 text-slate-400">Sin Datos</span>
+                    </div>
+
+                    <!-- Barra Gradiente Visual con Marcadores -->
+                    <div class="relative pt-6 pb-2">
+                        <!-- Puntero en Tiempo Real -->
+                        <div id="spectrum-needle" class="absolute top-0 transform -translate-x-1/2 transition-all duration-700 ease-out z-20" style="left: 50%;">
+                            <div class="bg-white text-slate-900 text-[11px] font-extrabold font-mono px-2 py-0.5 rounded shadow-lg flex flex-col items-center">
+                                <span id="needle-val">--.-°C</span>
+                                <div class="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-white"></div>
+                            </div>
+                        </div>
+
+                        <!-- Barra de Colores -->
+                        <div class="h-4 w-full rounded-full bg-slate-800 overflow-hidden flex shadow-inner border border-white/10">
+                            <div class="w-[20%] bg-blue-500/80" title="Subóptimo Frío (<18°C)"></div>
+                            <div class="w-[15%] bg-teal-500/80" title="Rango Aceptable (18-20°C)"></div>
+                            <div class="w-[25%] bg-gradient-to-r from-emerald-400 to-teal-400 shadow-[0_0_12px_#34d399]" title="Óptimo Máximo (20-22.5°C)"></div>
+                            <div class="w-[20%] bg-amber-500/80" title="Alerta Térmica (22.5-25°C)"></div>
+                            <div class="w-[20%] bg-rose-600/80" title="Estrés Crítico (>25°C)"></div>
+                        </div>
+
+                        <!-- Etiquetas del Espectro -->
+                        <div class="flex justify-between text-[10px] font-mono text-slate-400 mt-2">
+                            <span>15°C</span>
+                            <span>18°C</span>
+                            <span class="text-emerald-400 font-bold underline decoration-teal-400">Óptimo (20-22°C)</span>
+                            <span>25°C</span>
+                            <span class="text-rose-400">30°C+</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="text-3xl font-black text-purple-400 mt-1 font-mono" id="val_servo">0°</div>
-                <div class="text-[11px] text-slate-500 mt-1">Servo MG996R (D27)</div>
+
+                <!-- 4 Tarjetas de Métricas Cruciales -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    
+                    <!-- T1: Reactor -->
+                    <div class="cyber-card p-4 rounded-xl border-l-4 border-teal-400 glow-emerald">
+                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">T. Reactor</span>
+                        <div id="metric-t1" class="text-2xl font-extrabold text-teal-300 font-mono mt-1">--.- °C</div>
+                        <span class="text-[10px] font-mono text-slate-500 mt-1 block">Set: 21.0 °C (D15)</span>
+                    </div>
+
+                    <!-- T2: Ambiente -->
+                    <div class="cyber-card p-4 rounded-xl border-l-4 border-emerald-400">
+                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">T. Ambiente</span>
+                        <div id="metric-t2" class="text-2xl font-extrabold text-emerald-300 font-mono mt-1">--.- °C</div>
+                        <span class="text-[10px] font-mono text-slate-500 mt-1 block">Disipador (D13)</span>
+                    </div>
+
+                    <!-- Delta T Térmico -->
+                    <div class="cyber-card p-4 rounded-xl border-l-4 border-cyan-400 glow-cyan">
+                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Gradiente &Delta;T</span>
+                        <div id="metric-delta" class="text-2xl font-extrabold text-cyan-300 font-mono mt-1">--.- °C</div>
+                        <span class="text-[10px] font-mono text-slate-500 mt-1 block">T.Amb - T.Reactor</span>
+                    </div>
+
+                    <!-- Potencia Peltier -->
+                    <div class="cyber-card p-4 rounded-xl border-l-4 border-purple-400 glow-purple">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Peltier</span>
+                            <span id="metric-pwm-pct" class="text-[10px] font-mono font-bold text-purple-300 bg-purple-950/80 px-1.5 py-0.5 rounded">0%</span>
+                        </div>
+                        <div id="metric-watts" class="text-2xl font-extrabold text-purple-300 font-mono mt-1">0 W</div>
+                        <span id="metric-amp" class="text-[10px] font-mono text-slate-500 mt-1 block">0.0 A / 12V</span>
+                    </div>
+
+                </div>
+
             </div>
+
         </div>
 
-        <!-- Módulos de Control y Acción -->
+        <!-- ========================================================= -->
+        <!-- SECCIÓN 2: DECK DE CONTROL & SINTONIZACIÓN -->
+        <!-- ========================================================= -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-            <!-- Panel 1: Modo de Operación y PI -->
-            <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between">
+            <!-- Panel 1: Modo Operativo & Control Automático PI -->
+            <div class="cyber-card p-5 rounded-2xl flex flex-col justify-between border border-white/10">
                 <div>
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
-                        <span>🕹️</span> Control del Sistema
-                    </h3>
-                    <div class="grid grid-cols-2 gap-2.5 mb-3">
-                        <button id="btn-start" class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition shadow-lg flex items-center justify-center gap-1.5">
-                            ▶ Iniciar Prueba
-                        </button>
-                        <button id="btn-stop" class="py-2.5 px-3 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg transition shadow-lg flex items-center justify-center gap-1.5">
-                            🛑 Paro Total
-                        </button>
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-lg">🧠</span>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Lazo de Control PI</h3>
                     </div>
-                    <button id="btn-auto-pi" class="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition shadow-lg mb-2 flex items-center justify-center gap-1.5">
-                        🧠 Activar Control PI Automático (21.0 °C)
-                    </button>
-                    <button id="btn-calculate" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-teal-300 border border-teal-500/30 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5">
-                        📐 Calcular Kp / Ki (Cohen-Coon)
-                    </button>
+                    <p class="text-xs text-slate-400 mb-4">Regula automáticamente la celda Peltier y el escudo para mantener la microalga a 21°C.</p>
+
+                    <div class="space-y-2 mb-4">
+                        <button id="btn-pi-auto" class="w-full py-2.5 px-4 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white text-xs font-extrabold rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                            <span>⚡</span> Activar Control PI Automático (21.0 °C)
+                        </button>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="btn-start" class="py-2 px-3 bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5">
+                                ▶ Iniciar Registro
+                            </button>
+                            <button id="btn-stop" class="py-2 px-3 bg-rose-600/90 hover:bg-rose-500 text-white text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5">
+                                ⏹ Paro Seguro
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between">
-                    <span>Kp: <strong id="val_kp" class="text-teal-300 font-mono">25.0</strong></span>
-                    <span>Ki: <strong id="val_ki" class="text-purple-300 font-mono">0.08</strong></span>
-                    <span>Modo: <strong id="val_modo" class="text-slate-200 font-mono">MANUAL</strong></span>
+
+                <div class="pt-3 border-t border-white/10 space-y-2">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-400">Modo Activo:</span>
+                        <span id="ctrl-mode-display" class="font-mono font-bold text-teal-300">MANUAL</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-400">Parámetros PI:</span>
+                        <span class="font-mono text-slate-300">Kp: <strong id="val_kp" class="text-cyan-300">25.0</strong> | Ki: <strong id="val_ki" class="text-purple-300">0.08</strong></span>
+                    </div>
+                    <button id="btn-cohen-coon" class="w-full py-1.5 bg-slate-900 hover:bg-slate-800 text-teal-400 border border-teal-500/30 text-[11px] font-mono font-bold rounded-lg transition">
+                        📐 Re-calcular Kp/Ki (Cohen-Coon)
+                    </button>
                 </div>
             </div>
 
             <!-- Panel 2: Calibración Manual de Corrientes (Peltier) -->
-            <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between">
+            <div class="cyber-card p-5 rounded-2xl flex flex-col justify-between border border-white/10">
                 <div>
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-2 flex items-center gap-2">
-                        <span>⚡</span> Calibrador de Corriente Peltier
-                    </h3>
-                    <p class="text-xs text-slate-400 mb-3">Aplica escalones fijos de corriente para medir la capacidad de enfriamiento estacionario.</p>
-                    
-                    <input type="range" id="slider-pwm" min="0" max="255" value="0" class="w-full accent-cyan-400 mb-3 cursor-pointer">
-                    
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-lg">⚡</span>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Inyector de Corriente</h3>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-4">Aplica escalones fijos para medir la curva térmica estacionaria del biorreactor.</p>
+
+                    <!-- Slider de Control -->
+                    <div class="space-y-2 mb-4">
+                        <div class="flex justify-between text-xs font-mono">
+                            <span class="text-slate-400">PWM Manual</span>
+                            <span id="slider-pwm-val" class="font-bold text-cyan-300">0 / 255 (0%)</span>
+                        </div>
+                        <input type="range" id="slider-pwm" min="0" max="255" value="0" class="w-full cursor-pointer">
+                    </div>
+
+                    <!-- Botones de Acceso Rápido -->
                     <div class="grid grid-cols-4 gap-1.5">
-                        <button class="btn-step py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded font-mono" data-pwm="64">25%</button>
-                        <button class="btn-step py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded font-mono" data-pwm="128">50%</button>
-                        <button class="btn-step py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded font-mono" data-pwm="191">75%</button>
-                        <button class="btn-step py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded font-mono" data-pwm="255">100%</button>
+                        <button class="btn-step py-2 text-xs bg-slate-900 hover:bg-cyan-950 text-cyan-300 border border-cyan-800/40 rounded-lg font-mono font-bold transition" data-pwm="64">25%</button>
+                        <button class="btn-step py-2 text-xs bg-slate-900 hover:bg-cyan-950 text-cyan-300 border border-cyan-800/40 rounded-lg font-mono font-bold transition" data-pwm="128">50%</button>
+                        <button class="btn-step py-2 text-xs bg-slate-900 hover:bg-cyan-950 text-cyan-300 border border-cyan-800/40 rounded-lg font-mono font-bold transition" data-pwm="191">75%</button>
+                        <button class="btn-step py-2 text-xs bg-slate-900 hover:bg-cyan-950 text-cyan-300 border border-cyan-800/40 rounded-lg font-mono font-bold transition" data-pwm="255">100%</button>
                     </div>
                 </div>
-                <div class="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between">
-                    <span>Consumo Estimado:</span>
-                    <span class="text-cyan-300 font-mono font-bold" id="peltier_amp">0.0 A / 12V</span>
+
+                <div class="pt-3 border-t border-white/10 flex justify-between text-xs text-slate-400">
+                    <span>Estado del MOSFET:</span>
+                    <span id="mosfet-status-text" class="font-mono text-cyan-400 font-bold">Inactivo (0W)</span>
                 </div>
             </div>
 
             <!-- Panel 3: Escudo Orbital Frailejón (Servo MG996R) -->
-            <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between">
+            <div class="cyber-card p-5 rounded-2xl flex flex-col justify-between border border-white/10">
                 <div>
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-2 flex items-center gap-2">
-                        <span>🛡️</span> Escudo Orbital (Frailejón)
-                    </h3>
-                    <p class="text-xs text-slate-400 mb-3">Despliega la tela blanca reflectiva para bloquear radiación solar y calor.</p>
-                    
-                    <input type="range" id="slider-servo" min="0" max="180" value="0" class="w-full accent-purple-400 mb-3 cursor-pointer">
-                    
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-lg">🛡️</span>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Escudo Frailejón</h3>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-4">Rota la tela blanca reflectiva para bloquear radiación lumínica y calor exterior.</p>
+
+                    <!-- Slider de Ángulo -->
+                    <div class="space-y-2 mb-4">
+                        <div class="flex justify-between text-xs font-mono">
+                            <span class="text-slate-400">Ángulo Servo</span>
+                            <span id="slider-servo-val" class="font-bold text-purple-300">0° (Abierto)</span>
+                        </div>
+                        <input type="range" id="slider-servo" min="0" max="180" value="0" class="w-full cursor-pointer">
+                    </div>
+
+                    <!-- Botones Rápidos -->
                     <div class="grid grid-cols-2 gap-2">
-                        <button id="btn-curtain-open" class="py-2 text-xs bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 rounded font-bold transition">
-                            ☀️ Abrir (0°) Fotosíntesis
+                        <button id="btn-shield-open" class="py-2 text-xs bg-slate-900 hover:bg-emerald-950 text-emerald-300 border border-emerald-700/50 rounded-lg font-bold transition flex items-center justify-center gap-1.5">
+                            ☀️ Abrir (0°)
                         </button>
-                        <button id="btn-curtain-close" class="py-2 text-xs bg-slate-800 hover:bg-slate-700 text-rose-300 border border-rose-500/30 rounded font-bold transition">
-                            🛡️ Cerrar (180°) Reflejar
+                        <button id="btn-shield-close" class="py-2 text-xs bg-slate-900 hover:bg-purple-950 text-purple-300 border border-purple-700/50 rounded-lg font-bold transition flex items-center justify-center gap-1.5">
+                            🛡️ Cerrar (180°)
                         </button>
                     </div>
                 </div>
-                <div class="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-400 flex justify-between">
-                    <span>Posición:</span>
-                    <span class="text-purple-300 font-mono font-bold" id="servo_pos_text">0° (100% Luz)</span>
+
+                <div class="pt-3 border-t border-white/10 flex justify-between text-xs text-slate-400">
+                    <span>Protección Solar:</span>
+                    <span id="shield-albedo-text" class="font-mono text-purple-300 font-bold">0% Cobertura</span>
                 </div>
             </div>
 
         </div>
 
-        <!-- Gráficas en Tiempo Real -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
-            <!-- Gráfica 1: Temperatura del Reactor y Consigna -->
-            <div class="glass-panel p-5 rounded-2xl">
+        <!-- ========================================================= -->
+        <!-- SECCIÓN 3: MONITOR DE GRÁFICAS VECTORIALES EN VIVO -->
+        <!-- ========================================================= -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Gráfica Principal: Dinámica del Reactor vs Consigna -->
+            <div class="lg:col-span-8 cyber-card p-5 rounded-2xl border border-white/10">
                 <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-sm font-bold text-teal-300 uppercase tracking-wide flex items-center gap-2">
-                        <span>💧</span> Temperatura del Reactor vs Consigna (21 °C)
-                    </h3>
-                    <span class="text-[10px] font-mono bg-teal-950 text-teal-300 px-2 py-0.5 rounded border border-teal-800">Canal D15</span>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-teal-400 shadow-[0_0_8px_#2dd4bf]"></span>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Respuesta Térmica del Reactor vs Consigna (21.0 °C)</h3>
+                    </div>
+                    <span class="text-[10px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-white/5">Canal D15</span>
                 </div>
-                <div id="chart-reactor" class="w-full h-[320px]"></div>
+                <div id="chart-main" class="w-full h-80"></div>
             </div>
 
-            <!-- Gráfica 2: Temperatura del Disipador / Ambiente -->
-            <div class="glass-panel p-5 rounded-2xl">
+            <!-- Gráfica Secundaria: Ambiente & Disipador -->
+            <div class="lg:col-span-4 cyber-card p-5 rounded-2xl border border-white/10">
                 <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-sm font-bold text-emerald-300 uppercase tracking-wide flex items-center gap-2">
-                        <span>🌡️</span> Temperatura Ambiente / Disipador
-                    </h3>
-                    <span class="text-[10px] font-mono bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800">Canal D13</span>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Temperatura Ambiente</h3>
+                    </div>
+                    <span class="text-[10px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-white/5">Canal D13</span>
                 </div>
-                <div id="chart-ambiente" class="w-full h-[320px]"></div>
+                <div id="chart-ambient" class="w-full h-80"></div>
             </div>
 
-            <!-- Gráfica 3: Esfuerzo de Actuadores (PWM Peltier + Ángulo Servo) -->
-            <div class="lg:col-span-2 glass-panel p-5 rounded-2xl">
+            <!-- Gráfica Inferior: Esfuerzo de Actuadores Coordinados -->
+            <div class="lg:col-span-12 cyber-card p-5 rounded-2xl border border-white/10">
                 <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-sm font-bold text-purple-300 uppercase tracking-wide flex items-center gap-2">
-                        <span>📊</span> Dinámica de Actuación: Peltier (PWM) vs Escudo Frailejón (Ángulo Servo)
-                    </h3>
-                    <span class="text-[10px] font-mono text-slate-400">Control Coordinado Split-Range</span>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-purple-400 shadow-[0_0_8px_#c084fc]"></span>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Control Coordinado Split-Range (Peltier PWM + Ángulo Escudo)</h3>
+                    </div>
+                    <span class="text-[10px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-white/5">D25 & D27</span>
                 </div>
-                <div id="chart-actuadores" class="w-full h-[280px]"></div>
+                <div id="chart-actuators" class="w-full h-64"></div>
             </div>
 
         </div>
 
     </main>
 
-    <!-- Script de Integración con la API Python -->
+    <!-- Footer minimalista -->
+    <footer class="border-t border-white/5 py-4 px-6 text-center text-xs text-slate-500 font-mono">
+        ALUNA PBR-02 &middot; Grupo G3-ALPHA &middot; Semillero ProtopIA &middot; Universidad del Magdalena &middot; Control II
+    </footer>
+
+    <!-- LÓGICA DE CONTROL & COMUNICACIÓN CON BACKEND PYTHON -->
     <script is:inline>
         const API = 'http://127.0.0.1:5000';
         let isPolling = false;
 
-        const basePlotLayout = {
-            margin: {t: 10, r: 20, b: 35, l: 45},
+        // Toast de Notificación
+        function showToast(title, msg, icon = "✨") {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-title').textContent = title;
+            document.getElementById('toast-msg').textContent = msg;
+            document.getElementById('toast-icon').textContent = icon;
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 3500);
+        }
+
+        // Configuración de Gráficas Plotly (Dark Cyber Theme)
+        const darkPlotLayout = {
+            margin: { t: 15, r: 25, b: 35, l: 45 },
             plot_bgcolor: 'transparent',
             paper_bgcolor: 'transparent',
-            font: { family: 'Inter', color: '#94a3b8', size: 11 },
-            xaxis: { title: 'Tiempo (s)', gridcolor: '#1e293b', zerolinecolor: '#334155' },
-            yaxis: { title: 'Temp (°C)', gridcolor: '#1e293b', zerolinecolor: '#334155' },
-            legend: { x: 0.01, y: 0.98, bgcolor: 'rgba(15,23,42,0.85)', bordercolor: '#334155', borderwidth: 1 }
+            font: { family: 'Plus Jakarta Sans', color: '#64748b', size: 10 },
+            xaxis: {
+                title: 'Tiempo (s)',
+                gridcolor: 'rgba(255, 255, 255, 0.05)',
+                zerolinecolor: 'rgba(255, 255, 255, 0.1)',
+                color: '#64748b'
+            },
+            yaxis: {
+                title: 'Temperatura (°C)',
+                gridcolor: 'rgba(255, 255, 255, 0.05)',
+                zerolinecolor: 'rgba(255, 255, 255, 0.1)',
+                color: '#64748b'
+            },
+            legend: {
+                x: 0.02, y: 0.98,
+                bgcolor: 'rgba(11, 17, 32, 0.9)',
+                bordercolor: 'rgba(255, 255, 255, 0.1)',
+                borderwidth: 1,
+                font: { size: 10, color: '#cbd5e1' }
+            }
         };
 
+        // 1. Cargar Puertos Seriales
         async function refreshPorts() {
             try {
                 const res = await fetch(`${API}/ports`);
                 const ports = await res.json();
                 const select = document.getElementById('ports');
                 select.innerHTML = '';
-                if (!ports.length) select.innerHTML = '<option value="">Sin puertos</option>';
+                if (!ports.length) {
+                    select.innerHTML = '<option value="">Sin Puertos</option>';
+                    return;
+                }
                 ports.forEach(p => {
                     const opt = document.createElement('option');
                     opt.value = p;
                     opt.textContent = p;
                     select.appendChild(opt);
                 });
-            } catch(e) { console.error("Error al cargar puertos", e); }
+                showToast("Puertos Actualizados", `${ports.length} dispositivos encontrados`, "🔄");
+            } catch (e) {
+                showToast("Error de Conexión", "El backend en Python no responde", "⚠️");
+            }
         }
 
+        // 2. Conectar al Puerto Serial
         async function connectSerial() {
             const port = document.getElementById('ports').value;
-            if (!port) return alert("Selecciona un puerto");
+            if (!port) return showToast("Atención", "Selecciona un puerto serial válido", "⚠️");
             try {
                 const res = await fetch(`${API}/connect`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({port})
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ port })
                 });
                 const data = await res.json();
                 if (data.status === 'success') {
-                    document.getElementById('status-indicator').className = "w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.7)]";
+                    document.getElementById('status-indicator').className = "w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_12px_#34d399]";
                     document.getElementById('status-text').textContent = "Conectado: " + port;
-                    document.getElementById('status-text').className = "text-xs font-semibold text-emerald-400 font-mono";
+                    document.getElementById('status-text').className = "text-xs font-mono font-bold text-emerald-400";
+                    showToast("Conexión Exitosa", `ESP32 vinculada en ${port}`, "🚀");
                 } else {
-                    alert("Error: " + data.message);
+                    showToast("Error al Conectar", data.message, "❌");
                 }
-            } catch(e) { alert("No se pudo contactar con el backend Python."); }
+            } catch (e) {
+                showToast("Falla de Red", "No se puede contactar el servidor", "❌");
+            }
         }
 
+        // 3. Iniciar Telemetría
         async function startSystem() {
-            const res = await fetch(`${API}/start`, {method: 'POST'});
+            const res = await fetch(`${API}/start`, { method: 'POST' });
             const data = await res.json();
-            if (data.status === 'error') return alert(data.message);
+            if (data.status === 'error') return showToast("Error", data.message, "⚠️");
             isPolling = true;
             pollTelemetry();
+            showToast("Telemetría Activa", "Grabando datos en tiempo real", "▶");
         }
 
+        // 4. Paro Seguro Total
         async function stopSystem() {
-            await fetch(`${API}/stop`, {method: 'POST'});
+            await fetch(`${API}/stop`, { method: 'POST' });
             isPolling = false;
             document.getElementById('slider-pwm').value = 0;
             document.getElementById('slider-servo').value = 0;
-            document.getElementById('val_modo').textContent = "MANUAL";
+            updatePwmUI(0);
+            updateServoUI(0);
+            document.getElementById('ctrl-mode-display').textContent = "MANUAL";
+            showToast("Paro Total", "Peltier apagado y escudo abierto", "🛑");
         }
 
-        async function setPwmManual(val) {
+        // 5. Control Manual de PWM (Peltier)
+        async function setPwm(val) {
             val = parseInt(val);
-            document.getElementById('slider-pwm').value = val;
+            updatePwmUI(val);
             await fetch(`${API}/set_pwm`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({pwm: val})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pwm: val })
             });
         }
 
-        async function setServoManual(angle) {
+        function updatePwmUI(val) {
+            document.getElementById('slider-pwm').value = val;
+            const pct = Math.round((val / 255) * 100);
+            document.getElementById('slider-pwm-val').textContent = `${val} / 255 (${pct}%)`;
+            document.getElementById('metric-pwm-pct').textContent = pct + "%";
+            
+            const amps = ((val / 255) * 4.5).toFixed(1);
+            const watts = Math.round((val / 255) * 4.5 * 12);
+            document.getElementById('metric-watts').textContent = watts + " W";
+            document.getElementById('metric-amp').textContent = `${amps} A / 12V`;
+            document.getElementById('mosfet-status-text').textContent = val > 0 ? `Activo (${watts}W)` : "Inactivo (0W)";
+        }
+
+        // 6. Control del Servo Escudo Orbital (MG996R)
+        async function setServo(angle) {
             angle = parseInt(angle);
-            document.getElementById('slider-servo').value = angle;
+            updateServoUI(angle);
             await fetch(`${API}/set_servo`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({angle})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ angle })
             });
         }
 
-        async function toggleAutoPI() {
+        function updateServoUI(angle) {
+            document.getElementById('slider-servo').value = angle;
+            const pct = Math.round((angle / 180) * 100);
+            document.getElementById('slider-servo-val').textContent = `${angle}° (${pct}% Cierre)`;
+            document.getElementById('shield-albedo-text').textContent = `${pct}% Cobertura`;
+            
+            // Actualizar rotación en el Gemelo Digital SVG
+            const shieldGraphic = document.getElementById('orbital-shield-graphic');
+            if (shieldGraphic) {
+                shieldGraphic.style.transform = `rotate(${angle}deg)`;
+            }
+
+            const badge = document.getElementById('curtain-badge');
+            const angleDisplay = document.getElementById('orbital-angle-display');
+            if (angle <= 20) {
+                badge.className = "px-2.5 py-1 rounded-full text-[10px] font-bold font-mono bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center gap-1.5";
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 100% Fotosíntesis`;
+                angleDisplay.textContent = `${angle}° (Fotosíntesis Libre)`;
+            } else if (angle >= 160) {
+                badge.className = "px-2.5 py-1 rounded-full text-[10px] font-bold font-mono bg-purple-950 text-purple-300 border border-purple-800 flex items-center gap-1.5";
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span> 100% Frailejón`;
+                angleDisplay.textContent = `${angle}° (Albedo Solar Máximo)`;
+            } else {
+                badge.className = "px-2.5 py-1 rounded-full text-[10px] font-bold font-mono bg-amber-950 text-amber-300 border border-amber-800 flex items-center gap-1.5";
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Despliegue ${pct}%`;
+                angleDisplay.textContent = `${angle}° (Modulando Sombra)`;
+            }
+        }
+
+        // 7. Activar Control Automático PI
+        async function activatePI() {
             const res = await fetch(`${API}/config_pi`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({mode: "pi_auto", setpoint: 21.0})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: "pi_auto", setpoint: 21.0 })
             });
             const data = await res.json();
             if (data.status === 'success') {
-                document.getElementById('val_modo').textContent = "PI AUTO (21°C)";
+                document.getElementById('ctrl-mode-display').textContent = "PI AUTO (21.0°C)";
+                showToast("Lazo PI Activado", "Controlando temperatura y escudo", "🧠");
                 if (!isPolling) startSystem();
             }
         }
 
-        async function calculateCohenCoon() {
+        // 8. Re-calcular Cohen-Coon
+        async function calculatePI() {
             const res = await fetch(`${API}/calculate`);
             const data = await res.json();
             if (data.status === 'success') {
                 document.getElementById('val_kp').textContent = data.Kp;
                 document.getElementById('val_ki').textContent = data.Ki;
-                alert(`✅ Parámetros Calculados con Éxito:\nKp = ${data.Kp}\nKi = ${data.Ki}\nK = ${data.K}\nTau = ${data.tau}s\nL = ${data.L}s`);
+                showToast("Sintonización Exitosa", `Kp: ${data.Kp} | Ki: ${data.Ki}`, "📐");
             } else {
-                alert("⚠️ " + data.message);
+                showToast("Aviso", data.message, "⚠️");
             }
         }
 
+        // 9. Sondeo de Telemetría Periódico
         async function pollTelemetry() {
             if (!isPolling) return;
             try {
@@ -337,93 +699,105 @@
                     const lastT2 = t.temp2[t.temp2.length - 1];
                     const lastPwm = t.pwm[t.pwm.length - 1];
                     const lastServo = t.servo_angle[t.servo_angle.length - 1];
+                    const deltaT = lastT2 - lastT1;
 
-                    // Actualizar métricas
-                    document.getElementById('val_t1').textContent = lastT1.toFixed(2) + " °C";
-                    document.getElementById('val_t2').textContent = lastT2.toFixed(2) + " °C";
-                    document.getElementById('val_pwm').innerHTML = `${lastPwm} <span class="text-xs text-slate-500 font-normal">/255</span>`;
-                    document.getElementById('pwm_percent').textContent = Math.round((lastPwm / 255) * 100) + "%";
-                    
-                    const amps = ((lastPwm / 255) * 4.5).toFixed(1);
-                    const watts = Math.round((lastPwm / 255) * 4.5 * 12);
-                    document.getElementById('val_watts').textContent = watts + " W";
-                    document.getElementById('peltier_amp').textContent = `${amps} A / 12V`;
+                    // Actualizar métricas numéricas
+                    document.getElementById('metric-t1').textContent = lastT1.toFixed(2) + " °C";
+                    document.getElementById('metric-t2').textContent = lastT2.toFixed(2) + " °C";
+                    document.getElementById('metric-delta').textContent = (deltaT >= 0 ? "+" : "") + deltaT.toFixed(2) + " °C";
+                    document.getElementById('reactor-svg-temp').textContent = lastT1.toFixed(1) + "°C";
 
-                    document.getElementById('val_servo').textContent = lastServo + "°";
-                    document.getElementById('servo_pos_text').textContent = `${lastServo}° (${lastServo > 90 ? 'Sombra' : 'Luz'})`;
+                    // Actualizar aguja del espectro biológico
+                    // Rango de 15°C (0%) a 32°C (100%)
+                    const pctNeedle = Math.max(0, Math.min(100, ((lastT1 - 15) / 17) * 100));
+                    document.getElementById('spectrum-needle').style.left = `${pctNeedle}%`;
+                    document.getElementById('needle-val').textContent = lastT1.toFixed(1) + "°C";
 
-                    // Badge de estado biológico
-                    const badge = document.getElementById('badge-estado');
+                    // Badge de Estado del Cultivo
+                    const badge = document.getElementById('kpi-status-badge');
                     if (lastT1 >= 20.0 && lastT1 <= 22.5) {
-                        badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-950 text-teal-300 border border-teal-800";
-                        badge.textContent = "Óptimo T. chuii";
+                        badge.className = "px-3 py-0.5 rounded-full text-xs font-bold font-mono bg-emerald-950 text-emerald-300 border border-emerald-700 shadow-[0_0_10px_rgba(52,211,153,0.3)]";
+                        badge.textContent = "ÓPTIMO T. CHUII (20-22°C)";
                     } else if (lastT1 > 22.5 && lastT1 <= 25.0) {
-                        badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-800";
-                        badge.textContent = "Alerta Térmica";
+                        badge.className = "px-3 py-0.5 rounded-full text-xs font-bold font-mono bg-amber-950 text-amber-300 border border-amber-700";
+                        badge.textContent = "ALERTA TÉRMICA";
                     } else if (lastT1 > 25.0) {
-                        badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-800";
-                        badge.textContent = "Estrés Crítico";
+                        badge.className = "px-3 py-0.5 rounded-full text-xs font-bold font-mono bg-rose-950 text-rose-300 border border-rose-700 shadow-[0_0_12px_rgba(244,63,94,0.4)]";
+                        badge.textContent = "ESTRÉS CRÍTICO";
+                    } else {
+                        badge.className = "px-3 py-0.5 rounded-full text-xs font-bold font-mono bg-blue-950 text-blue-300 border border-blue-700";
+                        badge.textContent = "SUBÓPTIMO FRÍO";
                     }
 
-                    // Gráfica 1: Reactor
+                    // Sincronizar UI de actuadores si está en modo automático
+                    if (c && c.mode === "pi_auto") {
+                        updatePwmUI(lastPwm);
+                        updateServoUI(lastServo);
+                        document.getElementById('ctrl-mode-display').textContent = "PI AUTO (21.0°C)";
+                    }
+
+                    // Gráfica 1: Temperatura del Reactor vs Consigna
                     const traceReactor = {
-                        x: t.time, y: t.temp1, mode: 'lines+markers', name: 'Agua Reactor',
-                        line: {color: '#2dd4bf', width: 2.5, shape: 'spline'}, marker: {size: 4}
+                        x: t.time, y: t.temp1, mode: 'lines+markers', name: 'T. Reactor (Agua)',
+                        line: { color: '#2dd4bf', width: 2.5, shape: 'spline' },
+                        marker: { size: 4, color: '#0d9488' },
+                        fill: 'tozeroy',
+                        fillcolor: 'rgba(45, 212, 191, 0.04)'
                     };
                     const traceSetpoint = {
                         x: [t.time[0], t.time[t.time.length - 1]], y: [21.0, 21.0], mode: 'lines', name: 'Consigna (21°C)',
-                        line: {color: '#f59e0b', dash: 'dash', width: 2}
+                        line: { color: '#f59e0b', dash: 'dash', width: 2 }
                     };
-                    Plotly.react('chart-reactor', [traceReactor, traceSetpoint], basePlotLayout, {responsive: true, displayModeBar: false});
+                    Plotly.react('chart-main', [traceReactor, traceSetpoint], darkPlotLayout, { responsive: true, displayModeBar: false });
 
-                    // Gráfica 2: Ambiente
-                    const traceAmbiente = {
-                        x: t.time, y: t.temp2, mode: 'lines', name: 'Disipador / Ambiente',
-                        line: {color: '#10b981', width: 2}
+                    // Gráfica 2: Temperatura Ambiente
+                    const traceAmbient = {
+                        x: t.time, y: t.temp2, mode: 'lines', name: 'T. Ambiente / Disipador',
+                        line: { color: '#10b981', width: 2 }
                     };
-                    Plotly.react('chart-ambiente', [traceAmbiente], basePlotLayout, {responsive: true, displayModeBar: false});
+                    Plotly.react('chart-ambient', [traceAmbient], darkPlotLayout, { responsive: true, displayModeBar: false });
 
-                    // Gráfica 3: Actuadores
-                    const actLayout = JSON.parse(JSON.stringify(basePlotLayout));
-                    actLayout.yaxis = { title: 'Peltier PWM', range: [0, 260], gridcolor: '#1e293b' };
-                    actLayout.yaxis2 = { title: 'Ángulo Servo (°)', range: [0, 190], overlaying: 'y', side: 'right', gridcolor: 'transparent' };
+                    // Gráfica 3: Actuadores Coordinados
+                    const actLayout = JSON.parse(JSON.stringify(darkPlotLayout));
+                    actLayout.yaxis = { title: 'Peltier PWM', range: [0, 260], gridcolor: 'rgba(255,255,255,0.05)' };
+                    actLayout.yaxis2 = { title: 'Ángulo Escudo (°)', range: [0, 190], overlaying: 'y', side: 'right', gridcolor: 'transparent' };
                     
                     const tracePeltier = {
                         x: t.time, y: t.pwm, mode: 'lines', name: 'PWM Peltier (0-255)',
-                        line: {color: '#06b6d4', width: 2}
+                        line: { color: '#06b6d4', width: 2 }
                     };
-                    const traceServo = {
+                    const traceShield = {
                         x: t.time, y: t.servo_angle, mode: 'lines', name: 'Ángulo Escudo (°)', yaxis: 'y2',
-                        line: {color: '#c084fc', width: 2, dash: 'dot'}
+                        line: { color: '#c084fc', width: 2, dash: 'dot' }
                     };
-                    Plotly.react('chart-actuadores', [tracePeltier, traceServo], actLayout, {responsive: true, displayModeBar: false});
+                    Plotly.react('chart-actuators', [tracePeltier, traceShield], actLayout, { responsive: true, displayModeBar: false });
                 }
-            } catch(e) {}
+            } catch (e) {}
             setTimeout(pollTelemetry, 1000);
         }
 
-        // Eventos de la UI
+        // Eventos del DOM
         document.getElementById('btn-refresh').addEventListener('click', refreshPorts);
         document.getElementById('btn-connect').addEventListener('click', connectSerial);
         document.getElementById('btn-start').addEventListener('click', startSystem);
         document.getElementById('btn-stop').addEventListener('click', stopSystem);
-        document.getElementById('btn-auto-pi').addEventListener('click', toggleAutoPI);
-        document.getElementById('btn-calculate').addEventListener('click', calculateCohenCoon);
+        document.getElementById('btn-pi-auto').addEventListener('click', activatePI);
+        document.getElementById('btn-cohen-coon').addEventListener('click', calculatePI);
 
-        document.getElementById('slider-pwm').addEventListener('input', (e) => setPwmManual(e.target.value));
+        document.getElementById('slider-pwm').addEventListener('input', (e) => setPwm(e.target.value));
         document.querySelectorAll('.btn-step').forEach(btn => {
-            btn.addEventListener('click', (e) => setPwmManual(e.target.getAttribute('data-pwm')));
+            btn.addEventListener('click', (e) => setPwm(e.target.getAttribute('data-pwm')));
         });
 
-        document.getElementById('slider-servo').addEventListener('input', (e) => setServoManual(e.target.value));
-        document.getElementById('btn-curtain-open').addEventListener('click', () => setServoManual(0));
-        document.getElementById('btn-curtain-close').addEventListener('click', () => setServoManual(180));
+        document.getElementById('slider-servo').addEventListener('input', (e) => setServo(e.target.value));
+        document.getElementById('btn-shield-open').addEventListener('click', () => setServo(0));
+        document.getElementById('btn-shield-close').addEventListener('click', () => setServo(180));
 
         // Inicialización
         refreshPorts();
-        Plotly.newPlot('chart-reactor', [], basePlotLayout);
-        Plotly.newPlot('chart-ambiente', [], basePlotLayout);
-        Plotly.newPlot('chart-actuadores', [], basePlotLayout);
+        Plotly.newPlot('chart-main', [], darkPlotLayout);
+        Plotly.newPlot('chart-ambient', [], darkPlotLayout);
+        Plotly.newPlot('chart-actuators', [], darkPlotLayout);
     </script>
 </body>
 </html>
