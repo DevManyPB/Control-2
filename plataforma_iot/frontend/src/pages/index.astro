@@ -158,6 +158,19 @@
                 </div>
             </div>
 
+            <!-- Selector de Vistas / Pestañas de Navegación -->
+            <nav class="flex items-center gap-1.5 bg-black/60 p-1.5 rounded-2xl border border-white/10 shadow-inner">
+                <button id="nav-btn-overview" class="view-nav-btn px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 bg-gradient-to-r from-teal-500 to-cyan-500 text-slate-950 shadow-lg shadow-teal-500/20 cursor-pointer" data-target="view-overview">
+                    <span>📊</span> MANDO GENERAL
+                </button>
+                <button id="nav-btn-sensors" class="view-nav-btn px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-900 cursor-pointer" data-target="view-sensors">
+                    <span>🔬</span> BANCO DE SENSORES
+                </button>
+                <button id="nav-btn-ide" class="view-nav-btn px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-900 cursor-pointer" data-target="view-ide">
+                    <span>💻</span> ESTUDIO DE CÓDIGO (IDE)
+                </button>
+            </nav>
+
             <!-- Acciones de Cabecera: Guía de Uso + Conexión Inteligente -->
             <div class="flex items-center gap-3">
                 
@@ -192,6 +205,11 @@
     <!-- CUERPO PRINCIPAL DEL TABLERO -->
     <!-- ================================================================= -->
     <main class="max-w-[1600px] mx-auto px-8 py-8 space-y-8 flex-1 w-full">
+
+        <!-- ============================================================= -->
+        <!-- VISTA 1: MANDO GENERAL (CONTROL PI, GEMELO DIGITAL Y ENSAYOS) -->
+        <!-- ============================================================= -->
+        <div id="view-overview" class="space-y-8">
 
         <!-- FILA SUPERIOR: 4 GAUGES RADIALES HUD -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -458,6 +476,320 @@
                     <h3 class="text-base font-bold text-white font-sans">Peltier PWM vs Escudo Frailejón</h3>
                 </div>
                 <div id="echart-actuators" class="w-full h-80"></div>
+            </div>
+
+        </div>
+
+        </div> <!-- FIN VIEW OVERVIEW -->
+
+        <!-- ============================================================= -->
+        <!-- VISTA 2: BANCO DE PRUEBAS Y DIAGNÓSTICO DE SENSORES DS18B20   -->
+        <!-- ============================================================= -->
+        <div id="view-sensors" class="hidden space-y-8">
+            
+            <!-- Barra Superior del Banco de Sensores: Estado y Comandos de Hardware -->
+            <div class="hud-card p-6 rounded-3xl border border-white/10 flex flex-wrap items-center justify-between gap-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-2xl">
+                        🔬
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-white font-sans">Banco de Diagnóstico de Sensores Térmicos</h2>
+                        <p class="text-xs text-slate-400 font-mono">Protocolo Dallas 1-Wire &middot; Arquitectura de buses físicos independientes (GPIO 15 y GPIO 13)</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button id="btn-test-s1" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-teal-300 border border-teal-500/30 hover:border-teal-400 text-xs font-mono font-bold rounded-xl transition flex items-center gap-2 cursor-pointer shadow-md">
+                        <span>🧪</span> AISLAR SENSOR 1 (D15)
+                    </button>
+                    <button id="btn-test-s2" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-emerald-300 border border-emerald-500/30 hover:border-emerald-400 text-xs font-mono font-bold rounded-xl transition flex items-center gap-2 cursor-pointer shadow-md">
+                        <span>🧪</span> AISLAR SENSOR 2 (D13)
+                    </button>
+                    <button id="btn-test-both" class="px-4 py-2 bg-cyan-600/90 hover:bg-cyan-500 text-slate-950 text-xs font-mono font-extrabold rounded-xl transition flex items-center gap-2 cursor-pointer shadow-md">
+                        <span>🔄</span> AMBOS SENSORES
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fila de Tarjetas de Sensores Independientes -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- TARJETA SENSOR 1: AGUA / REACTOR (GPIO 15) -->
+                <div class="hud-card hud-card-interactive p-8 rounded-3xl border border-teal-500/30 relative overflow-hidden flex flex-col justify-between space-y-6 bg-gradient-to-b from-slate-900/90 to-slate-950/90">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center gap-2.5">
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-teal-500/20 text-teal-300 border border-teal-500/40">SENSOR 1</span>
+                                <span class="text-xs font-mono text-slate-400">Canal 1-Wire Agua / Medio Líquido</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-white mt-2 font-sans">Reactor Biológico (Agua)</h3>
+                            <p class="text-xs text-slate-400 font-mono mt-0.5">Asignación: Pin D15 &middot; Termopozo en Botella</p>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-xs font-mono font-extrabold bg-teal-950 text-teal-300 border border-teal-700">D15 / GPIO 15</span>
+                    </div>
+
+                    <!-- Visualización de Temperatura y Gauge -->
+                    <div class="flex items-center justify-between p-6 bg-black/50 rounded-2xl border border-white/5">
+                        <div>
+                            <span class="text-[11px] font-mono uppercase tracking-widest text-slate-400 font-semibold">Lectura Instantánea</span>
+                            <div id="diag-s1-temp" class="text-5xl font-black text-teal-300 font-mono mt-1 tracking-tight">--.-<span class="text-xl text-slate-500 font-normal">°C</span></div>
+                            <div class="mt-3 flex items-center gap-2">
+                                <span id="diag-s1-status" class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-slate-800 text-slate-400 border border-white/10">Buscando Sensor...</span>
+                            </div>
+                        </div>
+                        <div class="relative w-24 h-24 flex items-center justify-center">
+                            <svg class="w-24 h-24" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="40" stroke="#1e293b" stroke-width="8" fill="transparent"/>
+                                <circle id="diag-s1-ring" class="gauge-circle" cx="50" cy="50" r="40" stroke="#00f2fe" stroke-width="8" fill="transparent" stroke-dasharray="251.2" stroke-dashoffset="251.2" stroke-linecap="round"/>
+                            </svg>
+                            <span class="absolute text-sm font-mono font-bold text-teal-400">S1</span>
+                        </div>
+                    </div>
+
+                    <!-- Métricas de Sesión -->
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="p-3 bg-slate-900/80 rounded-xl border border-white/5 text-center">
+                            <span class="text-[10px] font-mono text-slate-400 uppercase block font-semibold">Mínima</span>
+                            <span id="diag-s1-min" class="text-base font-bold font-mono text-cyan-300 mt-0.5 block">--.-°C</span>
+                        </div>
+                        <div class="p-3 bg-slate-900/80 rounded-xl border border-white/5 text-center">
+                            <span class="text-[10px] font-mono text-slate-400 uppercase block font-semibold">Máxima</span>
+                            <span id="diag-s1-max" class="text-base font-bold font-mono text-rose-300 mt-0.5 block">--.-°C</span>
+                        </div>
+                        <div class="p-3 bg-slate-900/80 rounded-xl border border-white/5 text-center">
+                            <span class="text-[10px] font-mono text-slate-400 uppercase block font-semibold">Promedio</span>
+                            <span id="diag-s1-avg" class="text-base font-bold font-mono text-emerald-300 mt-0.5 block">--.-°C</span>
+                        </div>
+                    </div>
+
+                    <!-- Checklist de Hardware Pin D15 -->
+                    <div class="p-4 bg-slate-950/80 rounded-xl border border-white/5 space-y-2 text-xs font-mono text-slate-400">
+                        <div class="text-teal-400 font-bold uppercase tracking-wider text-[11px] mb-1">Checklist Físico Hardware:</div>
+                        <div class="flex items-center gap-2"><span>🔌</span> Línea de Datos: Pin D15 (Fila inferior, pin 3)</div>
+                        <div class="flex items-center gap-2"><span>⚡</span> Pull-up Externa: Resistencia 4.7 kΩ entre Amarillo (Datos) y 3.3V (Rojo)</div>
+                        <div class="flex items-center gap-2"><span>🛡️</span> Detección de Falla: Si marca -127°C, revisar cable de datos o masa GND</div>
+                    </div>
+                </div>
+
+                <!-- TARJETA SENSOR 2: AMBIENTE / DISIPADOR (GPIO 13) -->
+                <div class="hud-card hud-card-interactive p-8 rounded-3xl border border-emerald-500/30 relative overflow-hidden flex flex-col justify-between space-y-6 bg-gradient-to-b from-slate-900/90 to-slate-950/90">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center gap-2.5">
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">SENSOR 2</span>
+                                <span class="text-xs font-mono text-slate-400">Canal 1-Wire Aire / Disipador Térmico</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-white mt-2 font-sans">Ambiente / Disipador Caliente</h3>
+                            <p class="text-xs text-slate-400 font-mono mt-0.5">Asignación: Pin D13 &middot; Adherido a Aletas de Aluminio</p>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-xs font-mono font-extrabold bg-emerald-950 text-emerald-300 border border-emerald-700">D13 / GPIO 13</span>
+                    </div>
+
+                    <!-- Visualización de Temperatura y Gauge -->
+                    <div class="flex items-center justify-between p-6 bg-black/50 rounded-2xl border border-white/5">
+                        <div>
+                            <span class="text-[11px] font-mono uppercase tracking-widest text-slate-400 font-semibold">Lectura Instantánea</span>
+                            <div id="diag-s2-temp" class="text-5xl font-black text-emerald-300 font-mono mt-1 tracking-tight">--.-<span class="text-xl text-slate-500 font-normal">°C</span></div>
+                            <div class="mt-3 flex items-center gap-2">
+                                <span id="diag-s2-status" class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-slate-800 text-slate-400 border border-white/10">Buscando Sensor...</span>
+                            </div>
+                        </div>
+                        <div class="relative w-24 h-24 flex items-center justify-center">
+                            <svg class="w-24 h-24" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="40" stroke="#1e293b" stroke-width="8" fill="transparent"/>
+                                <circle id="diag-s2-ring" class="gauge-circle" cx="50" cy="50" r="40" stroke="#10b981" stroke-width="8" fill="transparent" stroke-dasharray="251.2" stroke-dashoffset="251.2" stroke-linecap="round"/>
+                            </svg>
+                            <span class="absolute text-sm font-mono font-bold text-emerald-400">S2</span>
+                        </div>
+                    </div>
+
+                    <!-- Métricas de Sesión -->
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="p-3 bg-slate-900/80 rounded-xl border border-white/5 text-center">
+                            <span class="text-[10px] font-mono text-slate-400 uppercase block font-semibold">Mínima</span>
+                            <span id="diag-s2-min" class="text-base font-bold font-mono text-cyan-300 mt-0.5 block">--.-°C</span>
+                        </div>
+                        <div class="p-3 bg-slate-900/80 rounded-xl border border-white/5 text-center">
+                            <span class="text-[10px] font-mono text-slate-400 uppercase block font-semibold">Máxima</span>
+                            <span id="diag-s2-max" class="text-base font-bold font-mono text-rose-300 mt-0.5 block">--.-°C</span>
+                        </div>
+                        <div class="p-3 bg-slate-900/80 rounded-xl border border-white/5 text-center">
+                            <span class="text-[10px] font-mono text-slate-400 uppercase block font-semibold">Promedio</span>
+                            <span id="diag-s2-avg" class="text-base font-bold font-mono text-emerald-300 mt-0.5 block">--.-°C</span>
+                        </div>
+                    </div>
+
+                    <!-- Checklist de Hardware Pin D13 -->
+                    <div class="p-4 bg-slate-950/80 rounded-xl border border-white/5 space-y-2 text-xs font-mono text-slate-400">
+                        <div class="text-emerald-400 font-bold uppercase tracking-wider text-[11px] mb-1">Checklist Físico Hardware:</div>
+                        <div class="flex items-center gap-2"><span>🔌</span> Línea de Datos: Pin D13 (Fila superior, pin 3)</div>
+                        <div class="flex items-center gap-2"><span>⚡</span> Pull-up Interna: Activada por software en ESP32 (INPUT_PULLUP)</div>
+                        <div class="flex items-center gap-2"><span>🛡️</span> Disipador: Debe recibir flujo de aire directo del ventilador de 12V</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- CRUCE TÉRMICO Y EVALUACIÓN DE DERIVA CERO -->
+            <div class="hud-card p-6 rounded-3xl border border-white/10 flex flex-wrap items-center justify-between gap-6 bg-slate-900/60">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-2xl">
+                        ⚖️
+                    </div>
+                    <div>
+                        <span class="text-xs font-mono uppercase tracking-widest text-purple-400 font-bold">Verificación de Cero y Calibración Relativa</span>
+                        <h4 class="text-base font-bold text-white font-sans mt-0.5">Diferencial Térmico en Reposo: Delta T = |T1 - T2|</h4>
+                        <p class="text-xs text-slate-400 font-mono mt-0.5">Con el Peltier apagado, ambos sensores deben registrar la misma temperatura ambiental (tolerancia standard: +-0.5 °C).</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <div class="text-right">
+                        <span class="text-[11px] font-mono text-slate-400 block uppercase">Diferencia Actual:</span>
+                        <span id="diag-delta-temp" class="text-3xl font-black font-mono text-purple-300">0.0<span class="text-sm text-slate-500 font-normal">°C</span></span>
+                    </div>
+                    <span id="diag-cross-status" class="px-4 py-2 rounded-2xl text-xs font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-700">
+                        Calibración Óptima
+                    </span>
+                </div>
+            </div>
+
+            <!-- GRÁFICA DEDICADA DE SENSORES ECHARTS -->
+            <div class="hud-card p-7 rounded-3xl border border-white/10">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <span class="text-xs font-mono uppercase tracking-widest text-teal-400 font-bold">Dinámica de Sensores DS18B20</span>
+                        <h3 class="text-base font-bold text-white font-sans">Registro de Alta Frecuencia: Sensor 1 (D15) vs Sensor 2 (D13)</h3>
+                    </div>
+                    <span class="text-xs font-mono text-slate-400">Resolución 12 bits (0.0625 °C)</span>
+                </div>
+                <div id="echart-sensors" class="w-full h-80"></div>
+            </div>
+
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- VISTA 3: ESTUDIO DE CÓDIGO Y COMPILADOR ESP32 (WEB IDE)      -->
+        <!-- ============================================================= -->
+        <div id="view-ide" class="hidden space-y-8">
+            
+            <!-- Barra Superior del IDE: Selector de Plantilla + Puerto + Acciones de Flasheo -->
+            <div class="hud-card p-6 rounded-3xl border border-white/10 flex flex-wrap items-center justify-between gap-6">
+                
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500/20 to-purple-500/20 border border-cyan-400/30 flex items-center justify-center text-2xl">
+                        💻
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-white font-sans">Estudio de Código y Compilador ESP32</h2>
+                        <p class="text-xs text-slate-400 font-mono">Compilación nativa con Arduino-CLI v1.5.2 &middot; Carga directa USB</p>
+                    </div>
+                </div>
+
+                <!-- Barra de herramientas: Plantilla, Puerto, FQBN, Botones -->
+                <div class="flex flex-wrap items-center gap-3">
+                    
+                    <!-- Selector de Plantilla -->
+                    <div class="flex items-center gap-2 bg-slate-900/90 p-1.5 rounded-2xl border border-white/10">
+                        <span class="text-xs font-mono text-slate-400 pl-2">Plantilla:</span>
+                        <select id="ide-template-select" class="bg-black/60 text-teal-300 font-mono text-xs px-3 py-1.5 rounded-xl border border-white/10 focus:border-teal-400 focus:outline-none cursor-pointer">
+                            <option value="aluna_firmware">🧬 1. Firmware Oficial ALUNA (Lazo PI)</option>
+                            <option value="test_sensores">🔬 2. Diagnóstico Dual Sensores</option>
+                            <option value="step_response">⚡ 3. Respuesta al Escalón (FOPDT)</option>
+                            <option value="blink_test">💡 4. Test Básico ESP32 (Blink)</option>
+                            <option value="blank">📝 5. Sketch en Blanco</option>
+                        </select>
+                    </div>
+
+                    <!-- Selector de Puerto Serial -->
+                    <div class="flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-2xl border border-white/10">
+                        <span class="text-xs font-mono text-slate-400 pl-2">Puerto:</span>
+                        <select id="ide-port-select" class="bg-black/60 text-cyan-300 font-mono text-xs px-3 py-1.5 rounded-xl border border-white/10 focus:border-cyan-400 focus:outline-none cursor-pointer">
+                            <option value="/dev/ttyUSB0">/dev/ttyUSB0</option>
+                        </select>
+                        <button id="btn-refresh-ports" title="Refrescar puertos disponibles" class="p-1.5 px-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-mono transition cursor-pointer">🔄</button>
+                    </div>
+
+                    <!-- FQBN Tag -->
+                    <span class="px-3 py-2 bg-purple-950/80 text-purple-300 border border-purple-800/80 rounded-xl text-xs font-mono font-bold">
+                        esp32:esp32:esp32
+                    </span>
+
+                    <!-- Botón Compilar -->
+                    <button id="btn-ide-compile" class="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-mono font-extrabold text-xs rounded-xl shadow-lg transition flex items-center gap-2 cursor-pointer">
+                        <span id="spin-compile" class="hidden animate-spin">🌀</span>
+                        <span id="icon-compile">⚙️</span> COMPILAR (VERIFICAR)
+                    </button>
+
+                    <!-- Botón Cargar -->
+                    <button id="btn-ide-upload" class="px-5 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 text-slate-950 font-mono font-extrabold text-xs rounded-xl shadow-lg transition flex items-center gap-2 cursor-pointer">
+                        <span id="spin-upload" class="hidden animate-spin">🌀</span>
+                        <span id="icon-upload">⚡</span> CARGAR AL ESP32
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- EDITOR DE CÓDIGO -->
+            <div class="hud-card rounded-3xl border border-white/10 overflow-hidden shadow-2xl flex flex-col">
+                
+                <!-- Barra de Estado del Archivo -->
+                <div class="px-6 py-3.5 bg-slate-900/90 border-b border-white/10 flex flex-wrap justify-between items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="w-3 h-3 rounded-full bg-teal-400"></span>
+                        <span id="ide-filename" class="text-xs font-mono font-bold text-white tracking-wide">esp32_firmware.ino</span>
+                        <span id="ide-file-status" class="px-2 py-0.5 rounded text-[10px] font-mono bg-teal-500/10 text-teal-300 border border-teal-500/30">Listo para Compilar</span>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <span id="ide-line-count" class="text-[11px] font-mono text-slate-400">Líneas: 0</span>
+                        <span class="text-slate-600">&bull;</span>
+                        <span id="ide-char-count" class="text-[11px] font-mono text-slate-400">Caracteres: 0</span>
+                        
+                        <button id="btn-copy-code" class="ml-4 px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-mono transition flex items-center gap-1.5 cursor-pointer">
+                            <span>📋</span> Copiar
+                        </button>
+                        <button id="btn-reset-code" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 rounded-lg text-xs font-mono transition flex items-center gap-1.5 cursor-pointer">
+                            <span>🔄</span> Restaurar
+                        </button>
+                        <button id="btn-clear-code" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-rose-300 hover:text-rose-200 rounded-lg text-xs font-mono transition flex items-center gap-1.5 cursor-pointer">
+                            <span>🗑️</span> Limpiar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Editor Textarea -->
+                <div class="relative bg-slate-950 p-4">
+                    <textarea id="ide-code-editor" spellcheck="false" class="w-full h-[480px] bg-transparent text-slate-100 font-mono text-xs leading-relaxed p-4 border border-white/5 rounded-2xl focus:border-teal-400/50 focus:outline-none resize-y selection:bg-teal-500/30 selection:text-white" placeholder="// Escribe o pega tu código Arduino C++ aquí..."></textarea>
+                </div>
+
+            </div>
+
+            <!-- CONSOLA DE COMPILACIÓN Y FLASHEO -->
+            <div class="hud-card rounded-3xl border border-white/10 overflow-hidden shadow-2xl flex flex-col">
+                
+                <div class="px-6 py-3 bg-black/80 border-b border-white/10 flex justify-between items-center">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-xs font-mono text-slate-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Terminal de Salida y Flasheador esptool.py
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <span id="ide-terminal-status" class="text-[11px] font-mono text-slate-400">Terminal en espera</span>
+                        <button id="btn-clear-terminal" class="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-mono rounded-lg transition cursor-pointer">
+                            Limpiar Terminal
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-black/95 p-6 font-mono text-xs overflow-x-auto min-h-[180px] max-h-[320px] overflow-y-auto">
+                    <pre id="ide-terminal-output" class="text-slate-300 leading-relaxed font-mono whitespace-pre-wrap">[ALUNA IDE]: Listo. Selecciona una plantilla o escribe tu codigo y presiona COMPILAR o CARGAR AL ESP32.</pre>
+                </div>
+
             </div>
 
         </div>
@@ -1005,6 +1337,19 @@
                             { name: 'Ángulo Escudo', data: t.servo_angle }
                         ]
                     });
+
+                    // Actualizar métricas del Banco de Diagnóstico de Sensores
+                    updateSensorDiagnostics(lastT1, lastT2);
+
+                    if (chartSensors) {
+                        chartSensors.setOption({
+                            xAxis: { data: timeLabels },
+                            series: [
+                                { name: 'Sensor 1: Agua (D15)', data: t.temp1 },
+                                { name: 'Sensor 2: Ambiente (D13)', data: t.temp2 }
+                            ]
+                        });
+                    }
                 }
             } catch (e) {
                 // Si falla la lectura, verificar si la ESP32 se desconectó
@@ -1093,7 +1438,398 @@
         document.getElementById('btn-shield-open').addEventListener('click', () => setServo(0));
         document.getElementById('btn-shield-close').addEventListener('click', () => setServo(180));
 
-        // INICIAR ESCANEO DE AUTODETECCIÓN (CADA 2 SEGUNDOS)
+        // =================================================================
+        // SELECTOR DE VISTAS PRINCIPALES (MANDO / SENSORES / IDE)
+        // =================================================================
+        const viewNavBtns = document.querySelectorAll('.view-nav-btn');
+        const views = {
+            'view-overview': document.getElementById('view-overview'),
+            'view-sensors': document.getElementById('view-sensors'),
+            'view-ide': document.getElementById('view-ide')
+        };
+
+        function switchView(targetId) {
+            Object.keys(views).forEach(id => {
+                if (views[id]) {
+                    if (id === targetId) {
+                        views[id].classList.remove('hidden');
+                    } else {
+                        views[id].classList.add('hidden');
+                    }
+                }
+            });
+
+            viewNavBtns.forEach(btn => {
+                const isTarget = btn.getAttribute('data-target') === targetId;
+                if (isTarget) {
+                    btn.className = "view-nav-btn px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 bg-gradient-to-r from-teal-500 to-cyan-500 text-slate-950 shadow-lg shadow-teal-500/20 cursor-pointer";
+                } else {
+                    btn.className = "view-nav-btn px-4 py-2 rounded-xl text-xs font-mono font-bold transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-slate-900 cursor-pointer";
+                }
+            });
+
+            setTimeout(() => {
+                if (targetId === 'view-overview') {
+                    chartMain.resize();
+                    chartAct.resize();
+                } else if (targetId === 'view-sensors') {
+                    if (!chartSensors) initSensorsChart();
+                    else chartSensors.resize();
+                }
+            }, 120);
+        }
+
+        viewNavBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = btn.getAttribute('data-target');
+                switchView(target);
+            });
+        });
+
+        // =================================================================
+        // BANCO DE PRUEBAS DE SENSORES: GRÁFICA Y DIAGNÓSTICO
+        // =================================================================
+        let chartSensors = null;
+        let s1History = [];
+        let s2History = [];
+
+        function initSensorsChart() {
+            const el = document.getElementById('echart-sensors');
+            if (!el) return;
+            chartSensors = echarts.init(el);
+            const optionSensors = {
+                backgroundColor: 'transparent',
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(9, 14, 26, 0.95)',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    textStyle: { color: '#f8fafc', fontFamily: 'JetBrains Mono', fontSize: 11 }
+                },
+                legend: {
+                    data: ['Sensor 1: Agua (D15)', 'Sensor 2: Ambiente (D13)'],
+                    textStyle: { color: '#94a3b8', fontFamily: 'Space Grotesk' },
+                    top: 0, right: 10
+                },
+                grid: { left: '3%', right: '3%', bottom: '8%', top: '15%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    data: [],
+                    axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.1)' } },
+                    axisLabel: { color: '#64748b', fontFamily: 'JetBrains Mono' },
+                    splitLine: { show: false }
+                },
+                yaxis: {
+                    type: 'value',
+                    axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.1)' } },
+                    axisLabel: { color: '#64748b', fontFamily: 'JetBrains Mono', formatter: '{value} °C' },
+                    splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.04)' } }
+                },
+                series: [
+                    {
+                        name: 'Sensor 1: Agua (D15)',
+                        type: 'line',
+                        smooth: true,
+                        data: [],
+                        itemStyle: { color: '#00f2fe' },
+                        lineStyle: { width: 3, shadowColor: 'rgba(0, 242, 254, 0.4)', shadowBlur: 10 }
+                    },
+                    {
+                        name: 'Sensor 2: Ambiente (D13)',
+                        type: 'line',
+                        smooth: true,
+                        data: [],
+                        itemStyle: { color: '#10b981' },
+                        lineStyle: { width: 3, shadowColor: 'rgba(16, 185, 129, 0.4)', shadowBlur: 10 }
+                    }
+                ]
+            };
+            chartSensors.setOption(optionSensors);
+        }
+
+        function updateSensorDiagnostics(t1, t2) {
+            if (t1 !== null && t1 !== undefined) {
+                if (t1 > -50 && t1 < 100) s1History.push(t1);
+                document.getElementById('diag-s1-temp').innerHTML = `${t1.toFixed(1)}<span class="text-xl text-slate-500 font-normal">°C</span>`;
+                
+                const pct1 = Math.max(0, Math.min(100, ((t1 - 15) / 25) * 100));
+                document.getElementById('diag-s1-ring').style.strokeDashoffset = 251.2 - (pct1 / 100) * 251.2;
+
+                const badge1 = document.getElementById('diag-s1-status');
+                if (t1 <= -120) {
+                    badge1.className = "px-3 py-1 rounded-full text-xs font-mono font-bold bg-rose-950 text-rose-300 border border-rose-700 animate-pulse";
+                    badge1.textContent = "⚠️ ERROR -127°C: Bus Desconectado";
+                } else if (Math.abs(t1 - 85.0) < 0.2) {
+                    badge1.className = "px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-950 text-amber-300 border border-amber-700 animate-pulse";
+                    badge1.textContent = "⚠️ AVISO 85°C: Fallo de Conversión";
+                } else {
+                    badge1.className = "px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-700";
+                    badge1.textContent = "🟢 Operativo (Lectura Válida)";
+                }
+
+                if (s1History.length > 0) {
+                    const min1 = Math.min(...s1History);
+                    const max1 = Math.max(...s1History);
+                    const avg1 = s1History.reduce((a, b) => a + b, 0) / s1History.length;
+                    document.getElementById('diag-s1-min').textContent = `${min1.toFixed(1)}°C`;
+                    document.getElementById('diag-s1-max').textContent = `${max1.toFixed(1)}°C`;
+                    document.getElementById('diag-s1-avg').textContent = `${avg1.toFixed(1)}°C`;
+                }
+            }
+
+            if (t2 !== null && t2 !== undefined) {
+                if (t2 > -50 && t2 < 100) s2History.push(t2);
+                document.getElementById('diag-s2-temp').innerHTML = `${t2.toFixed(1)}<span class="text-xl text-slate-500 font-normal">°C</span>`;
+                
+                const pct2 = Math.max(0, Math.min(100, ((t2 - 15) / 25) * 100));
+                document.getElementById('diag-s2-ring').style.strokeDashoffset = 251.2 - (pct2 / 100) * 251.2;
+
+                const badge2 = document.getElementById('diag-s2-status');
+                if (t2 <= -120) {
+                    badge2.className = "px-3 py-1 rounded-full text-xs font-mono font-bold bg-rose-950 text-rose-300 border border-rose-700 animate-pulse";
+                    badge2.textContent = "⚠️ ERROR -127°C: Bus Desconectado";
+                } else if (Math.abs(t2 - 85.0) < 0.2) {
+                    badge2.className = "px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-950 text-amber-300 border border-amber-700 animate-pulse";
+                    badge2.textContent = "⚠️ AVISO 85°C: Fallo de Conversión";
+                } else {
+                    badge2.className = "px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-700";
+                    badge2.textContent = "🟢 Operativo (Lectura Válida)";
+                }
+
+                if (s2History.length > 0) {
+                    const min2 = Math.min(...s2History);
+                    const max2 = Math.max(...s2History);
+                    const avg2 = s2History.reduce((a, b) => a + b, 0) / s2History.length;
+                    document.getElementById('diag-s2-min').textContent = `${min2.toFixed(1)}°C`;
+                    document.getElementById('diag-s2-max').textContent = `${max2.toFixed(1)}°C`;
+                    document.getElementById('diag-s2-avg').textContent = `${avg2.toFixed(1)}°C`;
+                }
+            }
+
+            // Cruce Térmico
+            if (t1 !== null && t2 !== null && t1 > -50 && t2 > -50) {
+                const delta = Math.abs(t1 - t2);
+                document.getElementById('diag-delta-temp').innerHTML = `${delta.toFixed(2)}<span class="text-sm text-slate-500 font-normal">°C</span>`;
+                const crossBadge = document.getElementById('diag-cross-status');
+                if (delta <= 0.6) {
+                    crossBadge.className = "px-4 py-2 rounded-2xl text-xs font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-700";
+                    crossBadge.textContent = "Calibración Óptima (Offset <= 0.6°C)";
+                } else if (delta <= 1.5) {
+                    crossBadge.className = "px-4 py-2 rounded-2xl text-xs font-mono font-bold bg-amber-950 text-amber-300 border border-amber-700";
+                    crossBadge.textContent = "Offset Aceptable en Reposo";
+                } else {
+                    crossBadge.className = "px-4 py-2 rounded-2xl text-xs font-mono font-bold bg-purple-950 text-purple-300 border border-purple-700";
+                    crossBadge.textContent = "Gradiente Térmico Activo";
+                }
+            }
+        }
+
+        // Botones de Comando Serial Rápido para Sensores
+        document.getElementById('btn-test-s1').addEventListener('click', () => {
+            showToast("Modo Sensor 1", "Monitoreando exclusivamente el bus D15 (Agua)", "🧪");
+        });
+        document.getElementById('btn-test-s2').addEventListener('click', () => {
+            showToast("Modo Sensor 2", "Monitoreando exclusivamente el bus D13 (Ambiente)", "🧪");
+        });
+        document.getElementById('btn-test-both').addEventListener('click', () => {
+            showToast("Modo Dual", "Monitoreando ambos sensores simultáneamente", "🔄");
+        });
+
+        // =================================================================
+        // ESTUDIO DE CÓDIGO Y COMPILADOR ESP32 (WEB IDE)
+        // =================================================================
+        let ideTemplates = {};
+        const editorEl = document.getElementById('ide-code-editor');
+        const templateSelectEl = document.getElementById('ide-template-select');
+        const portSelectEl = document.getElementById('ide-port-select');
+        const terminalEl = document.getElementById('ide-terminal-output');
+        const terminalStatusEl = document.getElementById('ide-terminal-status');
+
+        function updateEditorCounters() {
+            const code = editorEl.value;
+            const lines = code.split('\n').length;
+            const chars = code.length;
+            document.getElementById('ide-line-count').textContent = `Líneas: ${lines}`;
+            document.getElementById('ide-char-count').textContent = `Caracteres: ${chars}`;
+        }
+
+        editorEl.addEventListener('input', updateEditorCounters);
+
+        editorEl.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                this.value = this.value.substring(0, start) + "  " + this.value.substring(end);
+                this.selectionStart = this.selectionEnd = start + 2;
+                updateEditorCounters();
+            }
+        });
+
+        async function loadIDETemplates() {
+            try {
+                const res = await fetch(`${API}/api/ide/templates`);
+                const data = await res.json();
+                if (data.status === 'success') {
+                    ideTemplates = {};
+                    templateSelectEl.innerHTML = '';
+                    data.templates.forEach(tpl => {
+                        ideTemplates[tpl.id] = tpl;
+                        const opt = document.createElement('option');
+                        opt.value = tpl.id;
+                        opt.textContent = `${tpl.title}`;
+                        templateSelectEl.appendChild(opt);
+                    });
+                    if (data.templates.length > 0) {
+                        loadTemplateIntoEditor(data.templates[0].id);
+                    }
+                }
+            } catch(e) {
+                console.error("Error cargando plantillas IDE:", e);
+            }
+        }
+
+        function loadTemplateIntoEditor(tplId) {
+            const tpl = ideTemplates[tplId];
+            if (tpl) {
+                editorEl.value = tpl.code;
+                document.getElementById('ide-filename').textContent = tpl.id === 'test_sensores' ? 'test_sensores.ino' : (tpl.id === 'step_response' ? 'step_response.ino' : 'esp32_firmware.ino');
+                document.getElementById('ide-file-status').textContent = `Plantilla cargada: ${tpl.badge}`;
+                updateEditorCounters();
+            }
+        }
+
+        templateSelectEl.addEventListener('change', (e) => {
+            loadTemplateIntoEditor(e.target.value);
+        });
+
+        async function refreshIDEPorts() {
+            try {
+                const res = await fetch(`${API}/ports`);
+                const ports = await res.json();
+                portSelectEl.innerHTML = '';
+                if (ports.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.value = '';
+                    opt.textContent = 'Sin puertos detectados';
+                    portSelectEl.appendChild(opt);
+                } else {
+                    ports.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p;
+                        opt.textContent = p;
+                        portSelectEl.appendChild(opt);
+                    });
+                }
+            } catch(e) {}
+        }
+
+        document.getElementById('btn-refresh-ports').addEventListener('click', () => {
+            refreshIDEPorts();
+            showToast("Puertos", "Lista de puertos serie actualizada", "🔄");
+        });
+
+        // Botón COMPILAR
+        document.getElementById('btn-ide-compile').addEventListener('click', async () => {
+            const code = editorEl.value;
+            if (!code.trim()) return showToast("Aviso", "El editor está vacío.", "⚠️");
+
+            document.getElementById('spin-compile').classList.remove('hidden');
+            document.getElementById('icon-compile').classList.add('hidden');
+            terminalStatusEl.textContent = "Compilando con arduino-cli...";
+            terminalStatusEl.className = "text-[11px] font-mono text-cyan-300 animate-pulse";
+            terminalEl.textContent = `[ALUNA IDE]: Iniciando compilación para ESP32...\n$ arduino-cli compile --fqbn esp32:esp32:esp32 build_cache.ino\nEspere un momento...`;
+
+            try {
+                const res = await fetch(`${API}/api/ide/compile`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code, fqbn: 'esp32:esp32:esp32' })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.status === 'success') {
+                    terminalStatusEl.textContent = "Compilación Exitosa (0 Errores)";
+                    terminalStatusEl.className = "text-[11px] font-mono text-emerald-400 font-bold";
+                    terminalEl.textContent = `[ALUNA IDE] COMPILACIÓN EXITOSA:\n--------------------------------------------------\n${data.message}\n--------------------------------------------------\n¡El binario está listo para ser cargado en el ESP32!`;
+                    showToast("Compilación Exitosa", "Firmware verificado sin errores.", "✅");
+                } else {
+                    terminalStatusEl.textContent = "Error de Compilación";
+                    terminalStatusEl.className = "text-[11px] font-mono text-rose-400 font-bold";
+                    terminalEl.textContent = `[ALUNA IDE] ERROR DE COMPILACIÓN:\n--------------------------------------------------\n${data.message}\n--------------------------------------------------`;
+                    showToast("Error de Sintaxis", "Revisa el log de la terminal.", "❌");
+                }
+            } catch(e) {
+                terminalStatusEl.textContent = "Error de Conexión";
+                terminalEl.textContent = `[ALUNA IDE] Error comunicando con el backend: ${e.message}`;
+            } finally {
+                document.getElementById('spin-compile').classList.add('hidden');
+                document.getElementById('icon-compile').classList.remove('hidden');
+            }
+        });
+
+        // Botón CARGAR AL ESP32
+        document.getElementById('btn-ide-upload').addEventListener('click', async () => {
+            const code = editorEl.value;
+            const port = portSelectEl.value;
+            if (!code.trim()) return showToast("Aviso", "El editor está vacío.", "⚠️");
+
+            document.getElementById('spin-upload').classList.remove('hidden');
+            document.getElementById('icon-upload').classList.add('hidden');
+            terminalStatusEl.textContent = "Flasheando microcontrolador...";
+            terminalStatusEl.className = "text-[11px] font-mono text-amber-300 animate-pulse";
+            terminalEl.textContent = `[ALUNA IDE]: Preparando flasheo USB...\nLiberando puerto serial...\n$ arduino-cli compile --upload -p ${port} --fqbn esp32:esp32:esp32 build_cache.ino\nTransmitiendo bloques esptool...`;
+
+            try {
+                const res = await fetch(`${API}/api/ide/upload`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code, port: port, fqbn: 'esp32:esp32:esp32' })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.status === 'success') {
+                    terminalStatusEl.textContent = "Carga Exitosa (100%)";
+                    terminalStatusEl.className = "text-[11px] font-mono text-emerald-400 font-bold";
+                    terminalEl.textContent = `[ALUNA IDE] CARGA FINALIZADA CON ÉXITO:\n--------------------------------------------------\n${data.message}\n--------------------------------------------------\n¡ESP32 reiniciado y ejecutando nuevo firmware! Telemetría reanudada.`;
+                    showToast("Carga Exitosa", "Firmware transferido al ESP32.", "⚡");
+                } else {
+                    terminalStatusEl.textContent = "Fallo al Flashear";
+                    terminalStatusEl.className = "text-[11px] font-mono text-rose-400 font-bold";
+                    terminalEl.textContent = `[ALUNA IDE] ERROR AL FLASHEAR:\n--------------------------------------------------\n${data.message}\n--------------------------------------------------\nSugerencia: Si el ESP32 no responde, mantén presionado el botón BOOT durante el inicio de la carga.`;
+                    showToast("Fallo al Cargar", "Verifica el puerto o mantén presionado BOOT.", "❌");
+                }
+            } catch(e) {
+                terminalStatusEl.textContent = "Error de Conexión";
+                terminalEl.textContent = `[ALUNA IDE] Error comunicando con el backend: ${e.message}`;
+            } finally {
+                document.getElementById('spin-upload').classList.add('hidden');
+                document.getElementById('icon-upload').classList.remove('hidden');
+            }
+        });
+
+        // Copiar, Resetear, Limpiar
+        document.getElementById('btn-copy-code').addEventListener('click', () => {
+            navigator.clipboard.writeText(editorEl.value);
+            showToast("Copiado", "Código copiado al portapapeles", "📋");
+        });
+        document.getElementById('btn-reset-code').addEventListener('click', () => {
+            loadTemplateIntoEditor(templateSelectEl.value);
+            showToast("Restaurado", "Plantilla original restaurada", "🔄");
+        });
+        document.getElementById('btn-clear-code').addEventListener('click', () => {
+            editorEl.value = "";
+            updateEditorCounters();
+            showToast("Limpio", "Editor vaciado", "🗑️");
+        });
+        document.getElementById('btn-clear-terminal').addEventListener('click', () => {
+            terminalEl.textContent = "[ALUNA IDE]: Terminal en espera.";
+            terminalStatusEl.textContent = "Listo";
+            terminalStatusEl.className = "text-[11px] font-mono text-slate-400";
+        });
+
+        // INICIALIZACIÓN DEL SISTEMA
+        loadIDETemplates();
+        refreshIDEPorts();
         autoDetectAndConnect();
         autoScanInterval = setInterval(autoDetectAndConnect, 2000);
     </script>

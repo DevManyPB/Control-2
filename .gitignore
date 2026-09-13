@@ -6,4 +6,5 @@ __pycache__/
 *.log
 .DS_Store
 slprj/
+plataforma_iot/esp32_firmware/build_cache/
 !Tabla_Conexiones_ALUNA_PBR02.pdf

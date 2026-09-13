@@ -4,11 +4,21 @@ import serial
 import serial.tools.list_ports
 import threading
 import time
+import os
+import subprocess
 import numpy as np
 from scipy.optimize import curve_fit
 
 app = Flask(__name__)
 CORS(app)
+
+# ========================================================
+# RUTAS DE COMPILACIÓN ARDUINO-CLI Y FIRMWARE
+# ========================================================
+ARDUINO_CLI_PATH = "/home/jhon/.local/bin/arduino-cli"
+BUILD_DIR = "/home/jhon/Documentos/Control2/plataforma_iot/esp32_firmware/build_cache"
+SKETCH_PATH = os.path.join(BUILD_DIR, "build_cache.ino")
+FIRMWARE_DIR = "/home/jhon/Documentos/Control2/plataforma_iot/esp32_firmware"
 
 # ========================================================
 # VARIABLES DE ESTADO Y TELEMETRÍA
@@ -291,6 +301,227 @@ def calculate_pi():
         })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
+
+# ========================================================
+# ENDPOINTS DEL ESTUDIO DE CÓDIGO & COMPILADOR ESP32 (WEB IDE)
+# ========================================================
+@app.route('/api/ide/templates', methods=['GET'])
+def get_ide_templates():
+    templates = []
+    
+    # 1. Firmware Oficial ALUNA PBR-02
+    aluna_path = os.path.join(FIRMWARE_DIR, "esp32_firmware.ino")
+    aluna_code = ""
+    if os.path.exists(aluna_path):
+        with open(aluna_path, 'r', encoding='utf-8') as f:
+            aluna_code = f.read()
+            
+    templates.append({
+        "id": "aluna_firmware",
+        "title": "🧬 1. Firmware Oficial ALUNA PBR-02",
+        "desc": "Lazo PI, PWM 1kHz para Peltier, Servomotor MG996R y telemetría de 5 canales.",
+        "badge": "Producción",
+        "code": aluna_code
+    })
+
+    # 2. Diagnóstico de Sensores
+    sensor_path = os.path.join(FIRMWARE_DIR, "test_sensores", "test_sensores.ino")
+    sensor_code = ""
+    if os.path.exists(sensor_path):
+        with open(sensor_path, 'r', encoding='utf-8') as f:
+            sensor_code = f.read()
+            
+    templates.append({
+        "id": "test_sensores",
+        "title": "🔬 2. Diagnóstico Dual de Sensores",
+        "desc": "Lectura independiente D15 (Agua) y D13 (Aire), escaneo ROM y comandos seriales ('1', '2', 'B').",
+        "badge": "Diagnóstico",
+        "code": sensor_code
+    })
+
+    # 3. Respuesta al Escalón
+    step_path = os.path.join(FIRMWARE_DIR, "step_response", "step_response.ino")
+    step_code = ""
+    if os.path.exists(step_path):
+        with open(step_path, 'r', encoding='utf-8') as f:
+            step_code = f.read()
+            
+    templates.append({
+        "id": "step_response",
+        "title": "⚡ 3. Respuesta al Escalón (FOPDT)",
+        "desc": "Ensayo térmico en lazo abierto con escalón de 60% PWM para identificación matemática.",
+        "badge": "Modelado",
+        "code": step_code
+    })
+
+    # 4. Blink / Sanity Check ESP32
+    blink_code = """// Sanity Check y Test Básico para ESP32
+// ALUNA PBR-02
+void setup() {
+  Serial.begin(115200);
+  pinMode(2, OUTPUT); // LED integrado o GPIO 2
+  Serial.println("==================================");
+  Serial.println(" ESP32 INICIADO CORRECTAMENTE ");
+  Serial.println(" Reloj: 240 MHz | Baud: 115200");
+  Serial.println("==================================");
+}
+
+void loop() {
+  digitalWrite(2, HIGH);
+  Serial.println("[ESP32 VIVO] LED ON  - Pulso Activo");
+  delay(1000);
+  digitalWrite(2, LOW);
+  Serial.println("[ESP32 VIVO] LED OFF - Pulso Reposo");
+  delay(1000);
+}
+"""
+    templates.append({
+        "id": "blink_test",
+        "title": "💡 4. Test Básico ESP32 (Blink / Sanity Check)",
+        "desc": "Verificación de inicialización del microcontrolador y comunicación serial a 115200 baudios.",
+        "badge": "Básico",
+        "code": blink_code
+    })
+
+    # 5. Código en Blanco
+    blank_code = """// Código Libre C++ / Arduino para ESP32
+// Proyecto ALUNA PBR-02
+
+void setup() {
+  Serial.begin(115200);
+  // Inicialización de pines y periféricos
+}
+
+void loop() {
+  // Lógica principal de ejecución
+}
+"""
+    templates.append({
+        "id": "blank",
+        "title": "📝 5. Sketch en Blanco (Editor Libre)",
+        "desc": "Plantilla vacía para escribir o pegar cualquier código C++/Arduino personalizado.",
+        "badge": "Libre",
+        "code": blank_code
+    })
+
+    return jsonify({"status": "success", "templates": templates})
+
+@app.route('/api/ide/compile', methods=['POST'])
+def ide_compile():
+    data = request.json or {}
+    code = data.get('code', '')
+    fqbn = data.get('fqbn', 'esp32:esp32:esp32')
+
+    if not code.strip():
+        return jsonify({"status": "error", "message": "El código está vacío."}), 400
+
+    try:
+        os.makedirs(BUILD_DIR, exist_ok=True)
+        with open(SKETCH_PATH, 'w', encoding='utf-8') as f:
+            f.write(code)
+
+        cmd = [
+            ARDUINO_CLI_PATH,
+            "compile",
+            "--fqbn", fqbn,
+            SKETCH_PATH
+        ]
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=120)
+        output = (res.stdout or "") + ("\n" + res.stderr if res.stderr else "")
+
+        if res.returncode == 0:
+            return jsonify({
+                "status": "success",
+                "message": output.strip(),
+                "returncode": res.returncode
+            })
+        else:
+            return jsonify({
+                "status": "error",
+                "message": output.strip(),
+                "returncode": res.returncode
+            }), 400
+    except subprocess.TimeoutExpired:
+        return jsonify({"status": "error", "message": "Tiempo de compilación excedido (Timeout > 120s)."}), 500
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/ide/upload', methods=['POST'])
+def ide_upload():
+    global ser, is_testing
+    data = request.json or {}
+    code = data.get('code', '')
+    fqbn = data.get('fqbn', 'esp32:esp32:esp32')
+    port = data.get('port')
+
+    if not port:
+        ports = [p.device for p in serial.tools.list_ports.comports()]
+        if ports:
+            port = ports[0]
+        else:
+            return jsonify({"status": "error", "message": "No se detectó ningún puerto serie ESP32 conectado."}), 400
+
+    if not code.strip():
+        return jsonify({"status": "error", "message": "El código está vacío."}), 400
+
+    # Cerrar puerto serial de telemetría de forma limpia para liberar /dev/ttyUSB*
+    saved_port = port
+    if ser and ser.is_open:
+        saved_port = ser.port
+        try:
+            ser.close()
+        except Exception:
+            pass
+        ser = None
+        time.sleep(0.5)
+
+    try:
+        os.makedirs(BUILD_DIR, exist_ok=True)
+        with open(SKETCH_PATH, 'w', encoding='utf-8') as f:
+            f.write(code)
+
+        cmd = [
+            ARDUINO_CLI_PATH,
+            "compile",
+            "--upload",
+            "-p", port,
+            "--fqbn", fqbn,
+            SKETCH_PATH
+        ]
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=120)
+        output = (res.stdout or "") + ("\n" + res.stderr if res.stderr else "")
+
+        # Reabrir puerto serial tras el flasheo
+        time.sleep(1.0)
+        try:
+            ser = serial.Serial(saved_port, 115200, timeout=1)
+        except Exception:
+            pass
+
+        if res.returncode == 0:
+            return jsonify({
+                "status": "success",
+                "message": output.strip(),
+                "returncode": res.returncode
+            })
+        else:
+            return jsonify({
+                "status": "error",
+                "message": output.strip(),
+                "returncode": res.returncode
+            }), 400
+    except subprocess.TimeoutExpired:
+        try:
+            ser = serial.Serial(saved_port, 115200, timeout=1)
+        except Exception:
+            pass
+        return jsonify({"status": "error", "message": "Tiempo de carga excedido (Timeout > 120s)."}), 500
+    except Exception as e:
+        try:
+            ser = serial.Serial(saved_port, 115200, timeout=1)
+        except Exception:
+            pass
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000, use_reloader=False)
