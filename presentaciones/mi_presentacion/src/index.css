@@ -1,0 +1,63 @@
+@import "tailwindcss";
+@import "katex/dist/katex.min.css";
+
+@theme {
+  --color-electricBlue: #0088cc;
+  --color-cyan: #00a8cc;
+  --color-accentGreen: #22c55e;
+  --color-accentPurple: #9333ea;
+  --color-accentOrange: #ea580c;
+  --color-darkBg: #f8fafc;
+  --color-techGray: #ffffff;
+}
+
+body {
+  background-color: var(--color-darkBg);
+  color: #0f172a; /* Slate 900 */
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+/* Updated tech grid for light theme */
+.tech-grid {
+  background-image: linear-gradient(rgba(0, 136, 204, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 136, 204, 0.08) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Replaced glow with soft shadows for light theme */
+.glow-blue {
+  box-shadow: 0 4px 14px 0 rgba(0, 136, 204, 0.15);
+}
+
+.glow-text {
+  text-shadow: 0 2px 4px rgba(0, 136, 204, 0.2);
+}
+
+.katex-display {
+  margin: 1rem 0;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(0, 136, 204, 0.15);
+  box-shadow: inset 0 0 10px rgba(0, 136, 204, 0.05);
+  overflow-x: auto;
+  color: #1e293b;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(248, 250, 252, 0.5);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 136, 204, 0.3);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 136, 204, 0.6);
+}
