@@ -1,0 +1,381 @@
+\documentclass[11pt,letterpaper]{article}
+
+% =========================================================================
+% PAQUETES ESTÁNDAR COMPATIBLES CON OVERLEAF (pdfLaTeX / TeX Live)
+% =========================================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc,decorations.pathreplacing}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{hyperref}
+
+% Márgenes y diseño de página
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+% Paleta de colores institucional y técnica
+\definecolor{alunagreen}{RGB}{15, 118, 110}
+\definecolor{alunadark}{RGB}{15, 23, 42}
+\definecolor{alunacyan}{RGB}{6, 182, 212}
+\definecolor{alunapurple}{RGB}{147, 51, 234}
+\definecolor{alunagray}{RGB}{241, 245, 249}
+
+% Configuración de enlaces hipertexto
+\hypersetup{
+    colorlinks=true,
+    linkcolor=alunagreen,
+    filecolor=alunapurple,      
+    urlcolor=alunacyan,
+    pdftitle={Manual de Operación y Control Térmico - ALUNA PBR-02},
+    pdfauthor={Raúl Baytero, Jhon Cárdenas, Santiago Cavadia, Iván Meza - Universidad del Magdalena}
+}
+
+% Configuración de listados de código
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{alunagreen}\bfseries,
+    commentstyle=\color{gray},
+    stringstyle=\color{alunapurple},
+    backgroundcolor=\color{alunagray},
+    frame=single,
+    breaklines=true,
+    captionpos=b,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    showstringspaces=false
+}
+
+% Estilo de cajas de aviso (tcolorbox)
+\newtcolorbox{alertaBox}[1]{
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries,
+    title=#1,
+    arc=3mm,
+    boxrule=1mm
+}
+
+\newtcolorbox{notaBox}[1]{
+    colback=alunagreen!5!white,
+    colframe=alunagreen!85!black,
+    fonttitle=\bfseries,
+    title=#1,
+    arc=3mm,
+    boxrule=0.8mm
+}
+
+% =========================================================================
+% INICIO DEL DOCUMENTO
+% =========================================================================
+\begin{document}
+
+% -------------------------------------------------------------------------
+% PORTADA FORMAL
+% -------------------------------------------------------------------------
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+    
+    {\Huge \bfseries \color{alunadark} PROYECTO CAPSTONE I -- CONTROL II}\\[0.4cm]
+    {\LARGE \bfseries \color{alunagreen} FOTOBIORREACTOR ALUNA PBR-02}\\[0.2cm]
+    {\Large \textit{``Aluna Duna'': Sistema Bioinspirado en el Frailejón de la Sierra Nevada}}\\[1.5cm]
+    
+    \rule{\linewidth}{0.8mm}\\[0.5cm]
+    {\huge \bfseries MANUAL INTEGRAL DE HARDWARE, CONTROL TÉRMICO PI Y MECÁNICA BIOMIMÉTICA}\\[0.3cm]
+    {\large Cultivo de la Microalga Marina \textit{Tetraselmis chuii}}\\[0.5cm]
+    \rule{\linewidth}{0.8mm}\\[2cm]
+    
+    \begin{minipage}{0.48\textwidth}
+        \begin{flushleft} \large
+            \textbf{Integrantes (Equipo G3-ALPHA):}\\
+            Raúl Baytero\\
+            Jhon Cárdenas\\
+            Santiago Cavadia\\
+            Iván Meza
+        \end{flushleft}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \begin{flushright} \large
+            \textbf{Institución:}\\
+            Universidad del Magdalena\\
+            Facultad de Ingeniería\\
+            Semillero ProtopIA\\
+            Periodo 2026-II
+        \end{flushright}
+    \end{minipage}
+    
+    \vfill
+    {\large Santa Marta, Colombia \\ \today}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% -------------------------------------------------------------------------
+% SECCIÓN 1: INTRODUCCIÓN Y REQUISITOS BIOLÓGICOS
+% -------------------------------------------------------------------------
+\section{Introducción y Marco Biológico: \textit{Tetraselmis chuii}}
+
+El fotobiorreactor \textbf{ALUNA PBR-02} es una plataforma de cultivo automatizada diseñada para maximizar el crecimiento celular y la producción de biomasa de la microalga marina verde \textit{Tetraselmis chuii}. 
+
+\subsection{El Reto de la Temperatura: Realidad Experimental vs. Supuestos}
+En la literatura general suele asumirse que las microalgas operan adecuadamente entre $25^\circ\text{C}$ y $28^\circ\text{C}$. No obstante, basándonos en datos empíricos de más de 250 lecturas de laboratorio, se determinó que para \textit{Tetraselmis chuii}:
+\begin{itemize}
+    \item \textbf{Rango Óptimo Real:} \textbf{$20^\circ\text{C}$ a $22^\circ\text{C}$} (Tolerancia máxima segura: $18^\circ\text{C}$ a $24^\circ\text{C}$).
+    \item \textbf{Estrés Biológico Severo:} Temperaturas superiores a $25^\circ\text{C}$ inducen degradación de clorofila y ralentizan la fotosíntesis.
+    \item \textbf{Umbral Crítico / Colapso Celular:} Por encima de $35^\circ\text{C}$ ocurre lisis celular irreversible y muerte del cultivo.
+\end{itemize}
+
+\subsection{El Desafío Térmico en la Costa Caribe}
+En un entorno con temperaturas ambiente de $30^\circ\text{C}$ a $32^\circ\text{C}$ (típicas de Santa Marta), enfriar el reactor a $20-22^\circ\text{C}$ representa un incremento del \textbf{39\% en la demanda de refrigeración} frente a un supuesto de $26^\circ\text{C}$. Mantener este gradiente exige retirar más de $60\,\text{W}$ térmicos netos. La radiación lumínica requerida para la fotosíntesis ($2,000 - 4,000\,\text{lux}$, fotoperiodo de 12 a 18 horas) actúa inevitablemente como una fuente externa de calor que sobrecarga el sistema si no se gestiona activamente.
+
+% -------------------------------------------------------------------------
+% SECCIÓN 2: BIOMÍMESIS DEL FRAILEJÓN DE LA SIERRA NEVADA
+% -------------------------------------------------------------------------
+\section{Biomímesis: El Frailejón de la Sierra Nevada y el Escudo Orbital}
+
+El diseño de ALUNA PBR-02 toma como principio rector la estrategia termorreguladora del frailejón (\textit{Espeletia occulta} subsp. \textit{glossophylla}), endémico de los páramos de la Sierra Nevada de Santa Marta.
+
+\subsection{El Principio de la Naturaleza (Frailejón)}
+En los ecosistemas de alta montaña, el frailejón enfrenta una radiación ultravioleta y solar extrema durante el día combinada con vientos secos, mientras que de noche soporta temperaturas de congelación. La planta resuelve este dilema mediante:
+\begin{enumerate}
+    \item \textbf{Pubescencia reflectiva (Vellosidades blancas):} Sus hojas están cubiertas de una densa capa de vellosidades de color blanco que reflejan la radiación infrarroja y visible no aprovechada, evitando el recalentamiento de los tejidos vivos.
+    \item \textbf{Manto aislante de hojas secas (Marcescencia):} Las hojas muertas permanecen unidas al tallo formando un abrigo cilíndrico que amortigua los choques térmicos externos.
+\end{enumerate}
+
+\subsection{La Adaptación en ALUNA: ``El Frailejón Inverso''}
+En nuestro biorreactor se invierte la necesidad funcional: en lugar de retener calor de noche, requerimos \textbf{desviar la carga radiante diurna} sin ahogar el cultivo en la oscuridad permanente:
+\begin{itemize}
+    \item \textbf{El Escudo Orbital:} Una pantalla semicilíndrica de tela blanca de alta reflectancia albedo montada sobre un brazo rotatorio impulsado por un servomotor de alto torque (\textbf{MG996R}).
+    \item \textbf{Operación Dinámica:}
+    \begin{itemize}
+        \item \textbf{Modo Fotosíntesis ($0^\circ$):} El escudo se ubica en la cara posterior del reactor; la luz incide directamente en el cultivo para alimentar la fotosíntesis.
+        \item \textbf{Modo Escudo Frailejón ($180^\circ$):} Cuando el calor ambiental sobrepasa la capacidad de la celda Peltier, el servo rota la pantalla blanca interponiéndola entre la fuente de luz y la botella, reflejando la radiación térmica y aliviando la carga al lazo de control.
+    \end{itemize}
+\end{itemize}
+
+% -------------------------------------------------------------------------
+% SECCIÓN 3: LISTA MAESTRA DE MATERIALES Y EQUIPOS (BOM)
+% -------------------------------------------------------------------------
+\section{Lista Maestra de Materiales y Equipos (BOM)}
+
+\begin{table}[h!]
+\centering
+\caption{Componentes físicos y especificaciones del sistema ALUNA PBR-02.}
+\label{tab:bom}
+\begin{tabular}{lp{6cm}p{4cm}}
+\toprule
+\textbf{Componente} & \textbf{Especificación Técnica} & \textbf{Función en el Sistema} \\
+\midrule
+\textbf{ESP32 DevKitC} & 38 pines, dual-core, WiFi/BLE, 240 MHz & Microcontrolador maestro y adquisición \\
+\textbf{2x DS18B20} & Sonda impermeable acero inox, bus 1-Wire & Sensor 1 (Agua) y Sensor 2 (Ambiente) \\
+\textbf{Resistencia 4.7 k$\Omega$} & Película de carbón 1/4 W & Resistencia pull-up bus 1-Wire sensor 1 \\
+\textbf{TEC1-12706} & Celda Peltier 12V 6A, $P_{\max} \approx 60\,\text{W}$ & Actuador térmico de enfriamiento activo \\
+\textbf{Placa de Cobre} & Espesor 1--2 mm, alta conductividad térmica & Interfaz de contacto frío sobre la botella \\
+\textbf{Módulo D4184} & Doble MOSFET canal N en paralelo, 400W & Conmutador de potencia PWM para Peltier \\
+\textbf{Disipador + Fan} & Torre con base de cobre y ventilador 12V & Evacuación forzada del calor de cara caliente \\
+\textbf{Servo MG996R} & Piñonería metálica, torque $11\,\text{kg}\cdot\text{cm}$, 5--6V & Actuador mecánico del Escudo Orbital \\
+\textbf{Tela Blanca} & Textil sintético reflectante (poliéster/algodón) & Pantalla de albedo para el escudo \\
+\textbf{Fuente 30V / 10A} & Regulada conmutada (ajustada a 12V DC) & Alimentación general del sistema \\
+\textbf{Reductor Buck 5V} & Módulo LM2596 o fuente 5V 2A independiente & Alimentación dedicada para servo MG996R \\
+\textbf{Pasta Térmica} & Compuesto siliconado con óxido de zinc & Acoplamiento térmico en ambas caras Peltier \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% -------------------------------------------------------------------------
+% SECCIÓN 4: ESQUEMA ELÉCTRICO Y CONEXIONES DE HARDWARE
+% -------------------------------------------------------------------------
+\section{Arquitectura Eléctrica y Tabla Maestra de Conexiones}
+
+\begin{alertaBox}{Regla de Oro: Tierra Común (GND Reference)}
+El pin \textbf{GND} de la ESP32 \underline{debe} estar físicamente unido al pin \textbf{GND} de señal del módulo MOSFET y al \textbf{GND} de la fuente del servomotor. Si las tierras están flotando, las señales PWM no tendrán referencia, provocando oscilaciones destructivas o reseteos continuos.
+\end{alertaBox}
+
+\subsection{Tabla de Asignación Pin a Pin}
+
+\begin{table}[h!]
+\centering
+\caption{Conexiones eléctricas en la placa ESP32 (38 pines).}
+\label{tab:conexiones}
+\begin{tabular}{llll}
+\toprule
+\textbf{Señal / Función} & \textbf{Pin Físico ESP32} & \textbf{Ubicación en Placa} & \textbf{Detalle Eléctrico} \\
+\midrule
+\textbf{Sensor 1 (Agua) - Datos} & \texttt{D15} & Fila Inferior, Pin 3 & Bus 1-Wire con Pull-up $4.7\,\text{k}\Omega$ a 3V3 \\
+\textbf{Sensor 1 (Agua) - VCC} & \texttt{3V3} & Fila Inferior, Pin 1 & Alimentación 3.3V lógica \\
+\textbf{Sensor 1 (Agua) - GND} & \texttt{GND} & Fila Inferior, Pin 2 & Masa de referencia \\
+\midrule
+\textbf{Sensor 2 (Aire) - Datos} & \texttt{D13} & Fila Superior, Pin 3 & Bus 1-Wire (Pull-up interno activado) \\
+\textbf{Sensor 2 (Aire) - VCC} & \texttt{3V3} & Fila Inferior, Pin 1 & Compartido con Sensor 1 \\
+\textbf{Sensor 2 (Aire) - GND} & \texttt{GND} & Fila Inferior, Pin 2 & Compartido con Sensor 1 \\
+\midrule
+\textbf{MOSFET Peltier - PWM} & \texttt{D25} & Fila Superior, Pin 8 & Salida PWM (1 kHz, 8 bits: 0 a 255) \\
+\textbf{MOSFET Peltier - GND} & \texttt{GND} & Fila Superior, Pin 2 & Tierra de control \\
+\midrule
+\textbf{Servo MG996R - Señal} & \texttt{D27} & Fila Superior, Pin 6 & Salida PWM (50 Hz, pulsos $500 - 2500\,\mu\text{s}$) \\
+\textbf{Servo MG996R - GND} & \texttt{GND} & Fila Superior, Pin 2 & Retorno común a fuente 5V del servo \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{notaBox}{Alimentación del Servomotor MG996R}
+El cable rojo del servo \textbf{NUNCA} debe conectarse al pin 3V3 ni al pin VIN de la ESP32. Debe recibir $5.0\,\text{V}$ a $6.0\,\text{V}$ directamente desde una salida regulada de al menos $2.5\,\text{A}$ (como un módulo reductor DC-DC LM2596 conectado a la fuente de 12V).
+\end{notaBox}
+
+\subsection{Esquema Funcional de Flujo Eléctrico}
+\begin{center}
+\begin{tikzpicture}[node distance=1.8cm, auto, >=Latex]
+    \node [draw, rectangle, fill=alunagray, rounded corners, minimum width=3cm, minimum height=1cm] (fuente) {\textbf{Fuente 12V / 10A}};
+    \node [draw, rectangle, fill=alunagreen!20, rounded corners, minimum width=2.5cm, right=2cm of fuente] (mosfet) {\textbf{MOSFET D4184}};
+    \node [draw, rectangle, fill=cyan!20, rounded corners, minimum width=2.5cm, right=2cm of mosfet] (peltier) {\textbf{Peltier TEC1-12706}};
+    \node [draw, rectangle, fill=alunapurple!20, rounded corners, minimum width=3cm, below=2cm of fuente] (esp32) {\textbf{ESP32 Master}};
+    \node [draw, rectangle, fill=orange!20, rounded corners, minimum width=2.5cm, right=2cm of esp32] (servo) {\textbf{Servo MG996R}};
+    \node [draw, rectangle, fill=teal!20, rounded corners, minimum width=2.5cm, below=1.5cm of esp32] (sensores) {\textbf{Sensores DS18B20}};
+
+    \draw [->, ultra thick, color=red] (fuente) -- node[above]{\small 12V Potencia} (mosfet);
+    \draw [->, ultra thick, color=cyan] (mosfet) -- node[above]{\small PWM Conmutado} (peltier);
+    \draw [->, thick, color=blue] (esp32) -- node[left]{\small D25 (PWM)} (mosfet);
+    \draw [->, thick, color=purple] (esp32) -- node[above]{\small D27 (50Hz)} (servo);
+    \draw [<->, thick, color=teal] (esp32) -- node[right]{\small D15 / D13 (1-Wire)} (sensores);
+    \draw [dashed, thick] (fuente) -- node[left]{\small GND Común} (esp32);
+\end{tikzpicture}
+\end{center}
+
+% -------------------------------------------------------------------------
+% SECCIÓN 5: DISEÑO MECÁNICO DEL ESCUDO ORBITAL
+% -------------------------------------------------------------------------
+\section{Diseño Mecánico y Construcción del Escudo Orbital}
+
+El mecanismo de escudo orbital aprovecha los $180^\circ$ de rotación nativa del servomotor MG996R para rodear la botella cilíndrica del reactor.
+
+\subsection{Materiales de Construcción}
+\begin{itemize}
+    \item Una botella cilíndrica transparente de 1 a 2 litros (cuerpo del reactor).
+    \item Una lámina de plástico semirrígido o el corte longitudinal de una botella plástica de diámetro ligeramente mayor al reactor (radio $+1.5\,\text{cm}$).
+    \item Un retazo de tela blanca de alta densidad reflectiva.
+    \item Un brazo de servo (horn) de doble salida en plástico o aluminio.
+    \item Pegamento epóxico o silicona termofusible.
+\end{itemize}
+
+\subsection{Instrucciones de Ensamblaje Paso a Paso}
+\begin{enumerate}
+    \item \textbf{Conformación del Semicilindro:} Corta la lámina plástica con una altura igual a la zona líquida de la botella y un arco que cubra exactamente $180^\circ$ de la circunferencia.
+    \item \textbf{Revestimiento Reflectivo:} Pega la tela blanca estirada sobre la cara externa del semicilindro plástico. Asegúrate de que no queden pliegues sueltos.
+    \item \textbf{Montaje del Eje Superior:} Fija un travesaño rígido en la parte superior del semicilindro. En el centro exacto de este travesaño se acopla el aspa del servomotor.
+    \item \textbf{Alineación con el Biorreactor:} El servomotor MG996R se fija rígidamente a un soporte situado sobre la tapa de la botella, de modo que el eje del motor coincida con el eje axial central del cilindro de agua.
+    \item \textbf{Calibración de Topes:} 
+    \begin{itemize}
+        \item Al enviar el comando $C:0$, el escudo debe quedar completamente detrás del reactor (frente a la placa de cobre), dejando el $100\%$ del frente despejado a la luz.
+        \item Al enviar el comando $C:180$, el escudo debe girar al frente, interponiéndose entre la lámpara y el cultivo.
+    \end{itemize}
+\end{enumerate}
+
+% -------------------------------------------------------------------------
+% SECCIÓN 6: TEORÍA DE CONTROL Y SINTONIZACIÓN PI
+% -------------------------------------------------------------------------
+\section{Modelo Matemático y Estrategia de Control PI}
+
+\subsection{Modelo FOPDT (First-Order Plus Dead Time)}
+El comportamiento térmico del agua acoplada a la celda Peltier y a la placa de cobre se modela mediante una función de transferencia de primer orden con retardo:
+\begin{equation}
+    G(s) = \frac{T(s)}{U(s)} = \frac{K}{\tau s + 1} e^{-L s}
+\end{equation}
+Donde:
+\begin{itemize}
+    \item $K$: Ganancia estática del sistema ($^\circ\text{C} / \text{unidad PWM}$). Dado que el actuador enfría, $K < 0$.
+    \item $\tau$: Constante de inercia térmica del agua en segundos (típicamente entre $300\,\text{s}$ y $900\,\text{s}$ según el volumen).
+    \item $L$: Tiempo muerto o retardo de transporte térmico a través de la pared de la botella y la placa de cobre (típicamente $10 - 40\,\text{s}$).
+\end{itemize}
+
+\subsection{Sintonización de Cohen-Coon para Control PI}
+Debido a la presencia del retardo $L$, las fórmulas de Cohen-Coon ofrecen un ajuste robusto frente a perturbaciones ambientales:
+\begin{align}
+    K_p &= \frac{\tau}{|K| \cdot L} \left( 0.9 + \frac{L}{12\tau} \right) \\
+    T_i &= L \left( \frac{30\tau + 3L}{9\tau + 20L} \right) \\
+    K_i &= \frac{K_p}{T_i}
+\end{align}
+
+\subsection{Control Coordinado por Etapas (Split-Range / Frailejón)}
+El algoritmo implementado en el backend ejecuta una estrategia coordinada entre dos actuadores:
+
+\begin{equation}
+    \text{Acción}(T_{\text{agua}}) = 
+    \begin{cases}
+        \text{PWM Modulado por PI}, \quad \theta_{\text{servo}} = 0^\circ & \text{si } T_{\text{agua}} \le 22.0^\circ\text{C} \quad (\text{Zona Normal}) \\
+        \text{PWM} = 255 \, (100\%), \quad \theta_{\text{servo}} = f(T) & \text{si } 22.0 < T_{\text{agua}} < 24.0^\circ\text{C} \quad (\text{Alerta}) \\
+        \text{PWM} = 255 \, (100\%), \quad \theta_{\text{servo}} = 180^\circ & \text{si } T_{\text{agua}} \ge 24.0^\circ\text{C} \quad (\text{Crítico / Sombra Total})
+    \end{cases}
+\end{equation}
+
+% -------------------------------------------------------------------------
+% SECCIÓN 7: ARQUITECTURA DE SOFTWARE
+% -------------------------------------------------------------------------
+\section{Arquitectura de Software y Protocolos de Comunicación}
+
+El sistema opera bajo una arquitectura de tres capas desacopladas:
+
+\subsection{Capa 1: Firmware ESP32 (Hardware Abstraction)}
+\begin{itemize}
+    \item Lee periódicamente los sensores en \texttt{D15} y \texttt{D13} mediante la librería \texttt{DallasTemperature}.
+    \item Modula la potencia de la celda en \texttt{D25} usando el periférico \texttt{LEDC}.
+    \item Posiciona el servomotor en \texttt{D27} mediante \texttt{ESP32Servo}.
+    \item Emite por el puerto USB (\texttt{115200 baud}) una trama CSV cada 2 segundos:
+    $$\text{Trama:} \quad \texttt{tiempo,pwm,temp\_agua,temp\_aire,angulo\_servo}$$
+\end{itemize}
+
+\subsection{Capa 2: Backend Python (Flask API \& Control Engine)}
+\begin{itemize}
+    \item Lee el puerto serial de forma asíncrona mediante un hilo (\texttt{threading.Thread}).
+    \item Ejecuta la identificación no lineal de curvas con \texttt{scipy.optimize.curve\_fit}.
+    \item Calcula en tiempo real el lazo PI digital con integración anti-windup.
+    \item Provee una API REST con soporte de CORS para el consumo de telemetría y comandos.
+\end{itemize}
+
+\subsection{Capa 3: Frontend Astro (Panel de Control Sci-Fi)}
+\begin{itemize}
+    \item Construido en Astro v4 y estilizado con Tailwind CSS bajo temática de alto contraste.
+    \item Graficación vectorial continua con Plotly.js sin recargar la página.
+    \item Controles manuales de deslizadores para calibración de corriente (escalones de 25\%, 50\%, 75\%, 100\%) y prueba inmediata del servomotor.
+\end{itemize}
+
+% -------------------------------------------------------------------------
+% SECCIÓN 8: PROTOCOLO EXPERIMENTAL DE PRUEBAS
+% -------------------------------------------------------------------------
+\section{Protocolo Experimental y Guía de Puesta en Marcha}
+
+\subsection{Checklist Previo al Encendido}
+\begin{enumerate}
+    \item Verificar que el tornillo \texttt{VIN+} y \texttt{VIN-} del MOSFET reciban 12V de la fuente.
+    \item Verificar que la perilla de corriente de la fuente (C.C.) esté ajustada al menos en $7.0\,\text{A}$.
+    \item Verificar que la masa (\texttt{GND}) de la ESP32 esté unida a la masa del MOSFET y a la masa del servo.
+    \item Comprobar que el ventilador del disipador gire a máxima velocidad de forma inmediata.
+\end{enumerate}
+
+\subsection{Procedimiento de Caracterización Estática de Corriente}
+Para conocer la potencia real de enfriamiento:
+\begin{enumerate}
+    \item Llenar el biorreactor con el volumen de agua de prueba.
+    \item Encender la plataforma web en \texttt{http://localhost:4321} y presionar \textbf{CONECTAR}.
+    \item Presionar el botón de \textbf{25\%} en el panel de calibración. Esperar 10 minutos hasta que la temperatura del agua se estabilice y anotar el $\Delta T_1$.
+    \item Repetir el procedimiento para \textbf{50\%}, \textbf{75\%} y \textbf{100\%}.
+    \item Graficar la relación Corriente vs. Temperatura Estacionaria para encontrar el punto de saturación térmica de la celda.
+\end{enumerate}
+
+\subsection{Cierre del Lazo y Verificación del PI}
+\begin{enumerate}
+    \item En la web, presionar \textbf{Calcular Kp / Ki (Cohen-Coon)} para cargar las constantes identificadas.
+    \item Presionar \textbf{Activar Control PI Automático (21.0 °C)}.
+    \item Acercar una lámpara o foco térmico a la botella: verificar que cuando la temperatura del agua sobrepase los $22.5^\circ\text{C}$, el servomotor empiece a cerrar automáticamente el escudo orbital reflectivo, estabilizando el cultivo en el rango óptimo de \textit{Tetraselmis chuii}.
+\end{enumerate}
+
+\end{document}

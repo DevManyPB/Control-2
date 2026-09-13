@@ -1,4 +1,9 @@
 node_modules/
-*.pdf
+.astro/
+venv/
+__pycache__/
+*.pyc
 *.log
 .DS_Store
+slprj/
+!Tabla_Conexiones_ALUNA_PBR02.pdf

@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pecha Kucha — ALUNA PBR: Frailejón Artificial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #06091a;
+  --cyan: #00d4ff;
+  --green: #00ff88;
+  --purple: #7c3aed;
+  --orange: #ff6b35;
+  --pink: #ff1493;
+  --red: #ff4757;
+  --text: #ffffff;
+  --muted: #8892b0;
+  --slide-time: 20;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* ===== Slide Container ===== */
+.slides-wrapper {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+.slide {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+  pointer-events: none;
+  padding: 60px 80px;
+}
+
+.slide.active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+/* ===== Backgrounds ===== */
+.slide-bg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+}
+
+.slide-bg img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  filter: brightness(0.3);
+}
+
+.slide-bg.dim-less img { filter: brightness(0.4); }
+.slide-bg.dim-more img { filter: brightness(0.2); }
+
+.slide-bg-gradient {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+}
+
+.slide-content {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  width: 100%;
+}
+
+/* ===== Typography ===== */
+.slide-number {
+  position: absolute;
+  top: 20px; left: 30px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  z-index: 2;
+}
+
+.slide-tag {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--cyan);
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: inline-block;
+  padding: 4px 12px;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 20px;
+  background: rgba(0, 212, 255, 0.08);
+}
+
+h1 { font-size: 3.5rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; }
+h2 { font-size: 2.5rem; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 16px; }
+h3 { font-size: 1.4rem; font-weight: 600; margin-bottom: 12px; color: var(--cyan); }
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--cyan), var(--purple), var(--pink));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% auto;
+  animation: shimmer 4s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+p { font-size: 1.1rem; line-height: 1.7; color: rgba(255,255,255,0.85); max-width: 700px; }
+p.large { font-size: 1.3rem; }
+
+/* ===== Equation Blocks ===== */
+.equation-box {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.16) 0%, rgba(10, 14, 38, 0.6) 100%);
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-left: 4px solid var(--cyan);
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  color: var(--green);
+  margin: 14px 0;
+  overflow: hidden;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 8px 24px -6px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.equation-box.small { font-size: 0.9rem; padding: 12px 20px; }
+
+/* ===== Two Column Layout ===== */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 36px;
+  align-items: center;
+}
+
+.two-col.col-60-40 { grid-template-columns: 60% 40%; }
+.two-col.col-40-60 { grid-template-columns: 40% 60%; }
+.two-col.col-55-45 { grid-template-columns: 55% 45%; }
+
+/* ===== Inline Image ===== */
+.inline-img {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.inline-img img { width: 100%; height: auto; display: block; }
+
+/* ===== Cards & Containers ===== */
+.card-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.card-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+.card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.card-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+.info-card {
+  position: relative;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.015) 100%), rgba(10, 15, 36, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  padding: 22px;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.12), 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  overflow: hidden;
+}
+
+.info-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+}
+
+.info-card:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(14, 20, 48, 0.85);
+  border-color: rgba(0, 212, 255, 0.4);
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: inset 0 1px 2px 0 rgba(255, 255, 255, 0.2), 0 18px 40px -10px rgba(0, 212, 255, 0.22);
+}
+
+.info-card.cyan:hover { border-color: rgba(0, 212, 255, 0.5); box-shadow: 0 16px 40px -10px rgba(0, 212, 255, 0.25); }
+.info-card.green:hover { border-color: rgba(0, 255, 136, 0.5); box-shadow: 0 16px 40px -10px rgba(0, 255, 136, 0.25); }
+.info-card.purple:hover { border-color: rgba(124, 58, 237, 0.6); box-shadow: 0 16px 40px -10px rgba(124, 58, 237, 0.3); }
+.info-card.orange:hover { border-color: rgba(255, 107, 53, 0.6); box-shadow: 0 16px 40px -10px rgba(255, 107, 53, 0.3); }
+
+.info-card .icon-box {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  margin-bottom: 12px;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.15);
+}
+
+.info-card.green .icon-box { background: rgba(0, 255, 136, 0.1); border-color: rgba(0, 255, 136, 0.25); box-shadow: 0 4px 12px rgba(0, 255, 136, 0.15); }
+.info-card.purple .icon-box { background: rgba(124, 58, 237, 0.12); border-color: rgba(124, 58, 237, 0.3); box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15); }
+.info-card.orange .icon-box { background: rgba(255, 107, 53, 0.12); border-color: rgba(255, 107, 53, 0.3); box-shadow: 0 4px 12px rgba(255, 107, 53, 0.15); }
+
+.info-card h4 { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.01em; }
+.info-card p { font-size: 0.88rem; color: var(--muted); max-width: none; line-height: 1.55; }
+
+/* ===== List ===== */
+.styled-list { list-style: none; }
+.styled-list li {
+  padding: 8px 0;
+  padding-left: 24px;
+  position: relative;
+  font-size: 1rem;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.5;
+}
+.styled-list li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: var(--cyan);
+  font-weight: bold;
+}
+
+/* ===== Progress Bar ===== */
+.progress-bar {
+  position: fixed;
+  bottom: 0; left: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink));
+  z-index: 100;
+  transition: width 0.3s ease;
+}
+
+/* ===== Timer ===== */
+.timer-display {
+  position: fixed;
+  bottom: 16px; right: 30px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--muted);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.timer-ring {
+  width: 36px; height: 36px;
+  position: relative;
+}
+
+.timer-ring svg { transform: rotate(-90deg); }
+.timer-ring circle {
+  fill: none;
+  stroke-width: 3;
+}
+.timer-ring .bg { stroke: rgba(255,255,255,0.1); }
+.timer-ring .fg { stroke: var(--cyan); stroke-dasharray: 100; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear; }
+
+/* ===== Controls ===== */
+.controls {
+  position: fixed;
+  bottom: 14px; left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 100;
+}
+
+.ctrl-btn {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: var(--text);
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+.ctrl-btn:hover { background: rgba(0, 212, 255, 0.15); border-color: var(--cyan); }
+
+/* ===== Dot Nav ===== */
+.dot-nav {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 100;
+}
+
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.dot.active {
+  background: var(--cyan);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.7);
+  transform: scale(1.3);
+}
+
+/* ===== Specific slide backgrounds ===== */
+.bg-grad-1 { background: linear-gradient(135deg, #06091a 0%, #0d1538 50%, #15104a 100%); }
+.bg-grad-2 { background: linear-gradient(135deg, #06091a 0%, #0a1e2a 50%, #0d2847 100%); }
+.bg-grad-3 { background: linear-gradient(135deg, #0a0a1e 0%, #1a0a2e 60%, #2a0a3e 100%); }
+.bg-grad-4 { background: linear-gradient(135deg, #06091a 0%, #091a12 50%, #0a2218 100%); }
+.bg-grad-5 { background: linear-gradient(160deg, #0a0e27 0%, #1a0a0a 100%); }
+
+/* ===== Canvas chart mock ===== */
+.chart-mock {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.chart-mock canvas { width: 100% !important; height: 200px !important; display: block; }
+
+/* ===== BOM Table ===== */
+.bom-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+.bom-table th {
+  background: rgba(0, 212, 255, 0.12);
+  color: var(--cyan);
+  text-align: left;
+  padding: 5px 8px;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.bom-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+}
+.bom-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+.badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.badge-have {
+  background: rgba(0, 255, 136, 0.15);
+  color: var(--green);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+}
+.badge-quote {
+  background: rgba(0, 212, 255, 0.15);
+  color: var(--cyan);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+}
+.badge-verif {
+  background: rgba(124, 58, 237, 0.18);
+  color: #c49eff;
+  border: 1px solid rgba(124, 58, 237, 0.4);
+}
+.badge-est {
+  background: rgba(255, 107, 53, 0.15);
+  color: var(--orange);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+}
+
+/* ===== Team Cards ===== */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  text-align: center;
+}
+
+.team-member {
+  position: relative;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%), rgba(10, 15, 36, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 32px 18px;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  overflow: hidden;
+}
+
+.team-member::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.team-member:hover {
+  border-color: rgba(0, 212, 255, 0.4);
+  transform: translateY(-6px);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2), 0 20px 40px -10px rgba(0, 212, 255, 0.25);
+}
+
+.team-member:hover::before {
+  opacity: 1;
+}
+
+.team-avatar {
+  width: 76px; height: 76px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: white;
+  box-shadow: 0 8px 25px rgba(0, 212, 255, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.team-member:hover .team-avatar {
+  transform: scale(1.08) rotate(3deg);
+}
+
+.team-member h4 { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; color: #fff; }
+.team-member p { font-size: 0.82rem; color: var(--muted); text-align: center; max-width: none; }
+
+/* ===== Highlight text ===== */
+.hl-cyan { color: var(--cyan); }
+.hl-green { color: var(--green); }
+.hl-purple { color: var(--purple); }
+.hl-orange { color: var(--orange); }
+.hl-pink { color: var(--pink); }
+.hl-red { color: var(--red); }
+
+.mb-sm { margin-bottom: 8px; }
+.mb-md { margin-bottom: 16px; }
+.mb-lg { margin-bottom: 24px; }
+.mt-md { margin-top: 16px; }
+.mt-lg { margin-top: 24px; }
+
+@media (max-width: 900px) {
+  .slide { padding: 30px 40px; }
+  h1 { font-size: 2.2rem; }
+  h2 { font-size: 1.6rem; }
+  .two-col, .two-col.col-60-40, .two-col.col-40-60, .two-col.col-55-45 { grid-template-columns: 1fr; gap: 20px; }
+  .team-grid { grid-template-columns: repeat(2, 1fr); }
+  .card-grid.cols-3, .card-grid.cols-4 { grid-template-columns: 1fr 1fr; }
+}
+
+
+
+/* ===== MathJax color override ===== */
+.equation-box mjx-container,
+.equation-box mjx-container[display="true"] { margin: 0 !important; }
+mjx-container[jax="CHTML"] {
+  color: var(--green) !important;
+}
+mjx-container[jax="CHTML"] {
+  color: inherit !important;
+}
+
+/* ===== Better icon dots ===== */
+.info-card .icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+  margin-bottom: 12px;
+  opacity: 0.85;
+}
+
+/* ===== Backdrop on controls ===== */
+.controls {
+  background: rgba(6, 9, 26, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 24px;
+  padding: 6px 12px;
+}
+
+.timer-display {
+  background: rgba(6, 9, 26, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 6px 14px;
+}
+
+/* ===== Timer color states ===== */
+.timer-ring .fg.warning { stroke: var(--orange); }
+.timer-ring .fg.danger  { stroke: var(--red); }
+
+</style>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['\\(', '\\)']],
+    displayMath: [['\\[', '\\]']]
+  },
+  options: {
+    skipHtmlTags: ['script','noscript','style','textarea','pre','code','canvas']
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div class="progress-bar" id="progressBar" style="width: 5%"></div>
+
+<!-- Dot Navigation -->
+<div class="dot-nav" id="dotNav"></div>
+
+<!-- Timer Display -->
+<div class="timer-display">
+  <span id="slideCounter">01 / 20</span>
+  <div class="timer-ring">
+    <svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15.9"/><circle class="fg" id="timerCircle" cx="18" cy="18" r="15.9"/></svg>
+  </div>
+  <span id="timerSec">20s</span>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="ctrl-btn" id="btnPrev" title="Anterior">◀</button>
+  <button class="ctrl-btn" id="btnPlayPause" title="Play/Pausa">⏸</button>
+  <button class="ctrl-btn" id="btnNext" title="Siguiente">▶</button>
+</div>
+
+<!-- ============================== SLIDES ============================== -->
+<div class="slides-wrapper" id="slidesWrapper">
+
+<!-- SLIDE 1: PORTADA -->
+<div class="slide active" data-slide="0">
+  <div class="slide-bg dim-more"><img src="img/bioreactor.jpg" alt=""></div>
+  <span class="slide-number">01 / 20</span>
+  <div class="slide-content" style="text-align:center;">
+    <div class="slide-tag">Pecha Kucha · Reto 3 · ALUNA PBR</div>
+    <h1 class="text-gradient" style="font-size:3.8rem; margin-bottom:16px;">Frailejón Artificial</h1>
+    <p class="large" style="margin:0 auto 24px; text-align:center;">Control Térmico de Biorreactor para Cultivo de Microalgas</p>
+    <p style="color:var(--muted); margin:0 auto; font-size:0.95rem;">Simulación · Modelado · Filtros Digitales · Hardware</p>
+  </div>
+</div>
+
+<!-- SLIDE 2: INTEGRANTES -->
+<div class="slide" data-slide="1">
+  <div class="slide-bg-gradient bg-grad-1"></div>
+  <span class="slide-number">02 / 20</span>
+  <div class="slide-content">
+    <div class="slide-tag">Equipo de trabajo · Semillero ProtopIA</div>
+    <h2 class="mb-lg">Integrantes del Proyecto</h2>
+    <div class="team-grid">
+      <div class="team-member">
+        <div class="team-avatar">IM</div>
+        <h4>Iván Meza</h4>
+        <p style="color:var(--cyan); font-weight:600; font-size:0.82rem; margin-bottom:4px;">Modelado Bio-Térmico</p>
+        <span class="badge badge-quote">Cinética Droop & EDOs</span>
+      </div>
+      <div class="team-member">
+        <div class="team-avatar" style="background:linear-gradient(135deg,var(--green),var(--cyan));">JC</div>
+        <h4>Jhon Cárdenas</h4>
+        <p style="color:var(--green); font-weight:600; font-size:0.82rem; margin-bottom:4px;">Control & Simulación</p>
+        <span class="badge badge-have">Híbrido & Lógica Difusa</span>
+      </div>
+      <div class="team-member">
+        <div class="team-avatar" style="background:linear-gradient(135deg,var(--purple),var(--pink));">SC</div>
+        <h4>Santiago Cavadia</h4>
+        <p style="color:#c49eff; font-weight:600; font-size:0.82rem; margin-bottom:4px;">Procesamiento de Señales</p>
+        <span class="badge badge-verif">Filtros IIR, STM & MA</span>
+      </div>
+      <div class="team-member">
+        <div class="team-avatar" style="background:linear-gradient(135deg,var(--orange),var(--red));">RB</div>
+        <h4>Raúl Baytero</h4>
+        <p style="color:var(--orange); font-weight:600; font-size:0.82rem; margin-bottom:4px;">Hardware & Potencia</p>
+        <span class="badge badge-est">ESP32, Peltier & BOM</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: CONTEXTO -->
+<div class="slide" data-slide="2">
+  <div class="slide-bg dim-less"><img src="img/frailejon.jpg" alt=""></div>
+  <span class="slide-number">03 / 20</span>
+  <div class="slide-content">
+    <div class="slide-tag">Contexto</div>
+    <h2>¿Por qué "Frailejón Artificial"?</h2>
+    <p>El frailejón (<em>Espeletia</em>) del páramo colombiano regula su temperatura interna con hojas lanosas que actúan como <span class="hl-cyan">aislante térmico variable</span>.</p>
+    <p class="mt-md">Imitamos este mecanismo con una <strong>camisa aislante conmutable</strong> + un <strong>módulo Peltier</strong> para controlar la temperatura de un fotobiorreactor de microalgas.</p>
+  </div>
+</div>
+
+<!-- SLIDE 4: MICROALGAS -->
+<div class="slide" data-slide="3">
+  <div class="slide-bg dim-more"><img src="img/microalgae.jpg" alt=""></div>
+  <span class="slide-number">04 / 20</span>
+  <div class="slide-content">
+    <div class="slide-tag">Biología</div>
+    <h2>Microalgas en el Biorreactor</h2>
+    <p>Las microalgas son organismos fotosintéticos cuyo crecimiento depende críticamente de la <span class="hl-green">temperatura</span>, la <span class="hl-orange">luz</span> y los <span class="hl-purple">nutrientes</span>.</p>
+    <p class="mt-md">Mantener la temperatura dentro de la zona óptima (<strong>26–28 °C</strong>) maximiza la producción de biomasa y evita la muerte celular por estrés térmico.</p>
+  </div>
+</div>
+
+<!-- SLIDE 5: SISTEMA DE 4 EDOs -->
+<div class="slide" data-slide="4">
+  <div class="slide-bg-gradient bg-grad-3"></div>
+  <span class="slide-number">05 / 20</span>
+  <div class="slide-content">
+    <div class="slide-tag">Modelo Matemático</div>
+    <h2>Sistema de 4 Ecuaciones Diferenciales</h2>
+    <p class="mb-md">El biorreactor se modela con un vector de estado <span class="hl-cyan">\(\mathbf{x} = [X, S, Q, T]\)</span>:</p>
+    <div class="equation-box">\[ \frac{dX}{dt} = \mu X - D X - k_d X \quad \text{(Biomasa)} \]</div>
+    <div class="equation-box">\[ \frac{dS}{dt} = D(S_{in} - S) - \rho X \quad \text{(Sustrato)} \]</div>
+    <div class="equation-box">\[ \frac{dQ}{dt} = \rho - \mu Q \quad \text{(Cuota interna)} \]</div>
+    <div class="equation-box">\[ \frac{dT}{dt} = \frac{\dot{Q}_{solar} + \dot{Q}_{LED} + \dot{Q}_{met} - \dot{Q}_{pared} - \dot{Q}_{evap} - \dot{Q}_{Pelt}}{C_{total}} \]</div>
+  </div>
+</div>
+
+<!-- SLIDE 6: MODELO CTMI -->
+<div class="slide" data-slide="5">
+  <div class="slide-bg-gradient bg-grad-2"></div>
+  <span class="slide-number">06 / 20</span>
+  <div class="slide-content">
+    <div class="two-col col-55-45">
+      <div>
+        <div class="slide-tag">Modelo Cardinal</div>
+        <h2>CTMI — <span class="hl-cyan">\(f(T)\)</span></h2>
+        <p class="mb-md">Modelo de Rosso et al. (1993) — describe el efecto de la temperatura en el crecimiento:</p>
+        <div class="equation-box">\[ f(T) = \frac{(T - T_{max})(T - T_{min})^{2}}{(T_{opt} - T_{min}) \cdot D(T)} \]</div>
+        <ul class="styled-list mt-md">
+          <li><span class="hl-cyan">\(T_{min} = 10^\circ\text{C}\)</span> → crecimiento cesa</li>
+          <li><span class="hl-green">\(T_{opt} = 28^\circ\text{C}\)</span> → tasa máxima (f=1)</li>
+          <li><span class="hl-red">\(T_{max} = 35^\circ\text{C}\)</span> → letal</li>
+        </ul>
+      </div>
+      <div>
+        <div class="chart-mock" style="padding:4px; display:flex; align-items:center; justify-content:center;">
+          <img src="img/plot_ctmi.svg" alt="Curva Cardinal CTMI f(T)" style="width:100%; height:auto; max-height:280px; object-fit:contain; border-radius:6px;" onerror="this.src='img/plot_ctmi.png'">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: MODELO STEELE -->
+<div class="slide" data-slide="6">
+  <div class="slide-bg-gradient bg-grad-4"></div>
+  <span class="slide-number">07 / 20</span>
+  <div class="slide-content">
+    <div class="two-col col-55-45">
+      <div>
+        <div class="slide-tag">Fotoinhibición</div>
+        <h2>Modelo de Steele — <span class="hl-orange">\(f(I)\)</span></h2>
+        <p class="mb-md">Describe la respuesta del crecimiento a la irradiancia, incluyendo fotoinhibición a altas intensidades:</p>
+        <div class="equation-box">\[ f(I) = \frac{I}{I_{opt}} \cdot \exp\!\left(1 - \frac{I}{I_{opt}}\right) \]</div>
+        <ul class="styled-list mt-md">
+          <li><span class="hl-orange">\(I_{opt} = 200\text{ \mu mol/m}^2\text{/s}\)</span> → irradiancia óptima</li>
+          <li>\(f(I_{opt}) = 1\) → pico normalizado</li>
+          <li>\(f \to 0\) para \(I \to \infty\) (fotoinhibición)</li>
+        </ul>
+      </div>
+      <div>
+        <div class="chart-mock" style="padding:4px; display:flex; align-items:center; justify-content:center;">
+          <img src="img/plot_steele.svg" alt="Curva de Steele f(I)" style="width:100%; height:auto; max-height:280px; object-fit:contain; border-radius:6px;" onerror="this.src='img/plot_steele.png'">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: CINÉTICA DROOP -->
+<div class="slide" data-slide="7">
+  <div class="slide-bg-gradient bg-grad-3"></div>
+  <span class="slide-number">08 / 20</span>
+  <div class="slide-content">
+    <div class="slide-tag">Cinética celular</div>
+    <h2>Modelo de Droop + Absorción</h2>
+    <p class="mb-md">La tasa de crecimiento depende de la cuota interna de nutriente, no del sustrato externo directamente:</p>
+    <div class="two-col" style="gap:24px;">
+      <div>
+        <h3>Tasa de Crecimiento</h3>
+        <div class="equation-box">\[ \mu = \mu^{*}_{max} \left(1 - \frac{Q_{min}}{Q}\right) f(I)\, f(T) \]</div>
+        <p class="mt-md" style="font-size:0.95rem;">\(\mu^*_{max} = 1.1\text{ h}^{-1}\), \(Q_{min} = 1.0\text{ mmol/g}\)</p>
+      </div>
+      <div>
+        <h3>Tasa de Absorción</h3>
+        <div class="equation-box">\[ \rho = \rho_{max} \frac{S}{K_S + S} \]</div>
+        <p class="mt-md" style="font-size:0.95rem;">\(\rho_{max} = 2.0\text{ mmol/(g\cdot h)}\), \(K_S = 0.5\text{ mmol/L}\)</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: CONTROL TÉRMICO -->
+<div class="slide" data-slide="8">
+  <div class="slide-bg dim-more"><img src="img/thermal.jpg" alt=""></div>
+  <span class="slide-number">09 / 20</span>
+  <div class="slide-content">
+    <div class="slide-tag">Control Térmico</div>
+    <h2>Camisa Aislante + Peltier</h2>
+    <div class="two-col" style="gap:24px;">
+      <div>
+        <h3>Supervisor con Histéresis</h3>
+        <p style="font-size:0.95rem;">Conmuta la camisa aislante \(s = 0/1\) con banda de histéresis \(\Delta T = \pm 1^\circ\text{C}\) alrededor del setpoint \(T_{sp} = 26.5^\circ\text{C}\)</p>
+        <div class="equation-box small mt-md">\[ \tau_T(s{=}0) \approx 6.5\text{ h} \rightarrow \text{respuesta rápida} \] \[ \tau_T(s{=}1) \approx 21.8\text{ h} \rightarrow \text{bien aislado} \]</div>
+      </div>
+      <div>
+        <h3>PID + Feedforward</h3>
+        <p style="font-size:0.95rem;">Controlador PID con gain scheduling ajusta la corriente del Peltier, limitada a \(I_{e,max} = 4\text{ A}\)</p>
+        <div class="equation-box small mt-md">\[ \dot{Q}_{Pelt} = \alpha_{TE}\, I_e\, T_c - \tfrac{1}{2} I_e^{2} R_{TE} - K_{TE}\, \Delta T \]</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10: LISTA DE MATERIALES Y PRESUPUESTO -->
+<div class="slide" data-slide="9">
+  <div class="slide-bg-gradient bg-grad-1"></div>
+  <span class="slide-number">10 / 20</span>
+  <div class="slide-content">
+    <div class="slide-tag">Costos & Factibilidad · Agosto 2026</div>
+    <h2 style="font-size:2.2rem; margin-bottom:12px;">Lista de Materiales (BOM) y Presupuesto</h2>
+    
+    <div class="two-col" style="gap:20px; align-items:flex-start;">
+      <!-- Columna Izquierda: Sensado y Actuación Térmica/Mecánica -->
+      <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px 14px;">
+        <h4 style="color:var(--cyan); font-size:0.85rem; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Sensado & Actuación Térmica / Mecánica</h4>
+        <table class="bom-table">
+          <thead>
+            <tr>
+              <th>Componente</th>
+              <th>Precio</th>
+              <th>Origen / Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Sensor Temp. DS18B20 sumergible</td>
+              <td>$12.300</td>
+              <td><span class="badge badge-verif">Verificado</span></td>
+            </tr>
+            <tr>
+              <td>Módulo pH PH-4502C + Electrodo E201</td>
+              <td>$112.999</td>
+              <td><span class="badge badge-verif">Verificado</span></td>
+            </tr>
+            <tr>
+              <td>Sensor DHT22 (Temp/Humedad amb.)</td>
+              <td>$20.900</td>
+              <td><span class="badge badge-est">Estimado</span></td>
+            </tr>
+            <tr>
+              <td>Celda Peltier TEC1-12706 (12V, 6A)</td>
+              <td>$21.600</td>
+              <td><span class="badge badge-quote">Cotizado</span></td>
+            </tr>
+            <tr>
+              <td>Servomotor MG996R (11 kg-cm, metal)</td>
+              <td>$26.000</td>
+              <td><span class="badge badge-quote">Cotizado</span></td>
+            </tr>
+            <tr>
+              <td>Disipador + CPU Cooler + Bloque Al</td>
+              <td>$0</td>
+              <td><span class="badge badge-have">✓ Ya tienes</span></td>
+            </tr>
+            <tr>
+              <td>Módulo Driver PWM / MOSFET</td>
+              <td>$0</td>
+              <td><span class="badge badge-have">✓ Ya tienes</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Columna Derecha: Aireación, Control y Resumen Financiero -->
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px 14px;">
+          <h4 style="color:var(--green); font-size:0.85rem; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Aireación, Circulación & Control</h4>
+          <table class="bom-table">
+            <thead>
+              <tr>
+                <th>Componente</th>
+                <th>Precio</th>
+                <th>Origen / Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Bomba de aire + Piedra difusora + Manguera</td>
+                <td>$34.900</td>
+                <td><span class="badge badge-quote">Cotizado</span></td>
+              </tr>
+              <tr>
+                <td>Mini bomba de agua sumergible (Mezclado)</td>
+                <td>$15.000</td>
+                <td><span class="badge badge-quote">Cotizada</span></td>
+              </tr>
+              <tr>
+                <td>ESP32 DevKit V1 (WROOM-32)</td>
+                <td>$0</td>
+                <td><span class="badge badge-have">✓ Ya tienes</span></td>
+              </tr>
+              <tr>
+                <td>Fuente conmutada 12V 10A + Buck 5V</td>
+                <td>$0</td>
+                <td><span class="badge badge-have">✓ Ya tienes</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tarjetas de Resumen Financiero -->
+        <div class="card-grid cols-2" style="gap:10px;">
+          <div class="info-card" style="padding:10px 12px; text-align:left; background:rgba(0,212,255,0.08); border-color:rgba(0,212,255,0.3);">
+            <p style="font-size:0.7rem; text-transform:uppercase; color:var(--cyan); font-weight:700; margin:0;">Subtotal a Comprar</p>
+            <h3 style="font-size:1.3rem; color:#fff; margin:2px 0 0;">$243.699 COP</h3>
+            <p style="font-size:0.72rem; color:var(--muted); margin:0;">Ítems verificados y cotizados</p>
+          </div>
+          <div class="info-card" style="padding:10px 12px; text-align:left; background:rgba(0,255,136,0.08); border-color:rgba(0,255,136,0.3);">
+            <p style="font-size:0.7rem; text-transform:uppercase; color:var(--green); font-weight:700; margin:0;">Presupuesto Total</p>
+            <h3 style="font-size:1.3rem; color:#fff; margin:2px 0 0;">$383.754 – $400.439 COP</h3>
+            <p style="font-size:0.72rem; color:var(--muted); margin:0;">+ Vasija y 15–20% contingencia (~$95 USD)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11: GRÁFICA TEMPERATURA -->
+<div class="slide" data-slide="10">
+  <div class="slide-bg-gradient bg-grad-2"></div>
+  <span class="slide-number">11 / 20</span>
+  <div class="slide-content">
+    <div class="slide-tag">Resultado de Simulación</div>
+    <h2>Temperatura del Cultivo — 72h</h2>
+    <div class="chart-mock" style="height:350px; display:flex; align-items:center; justify-content:center; padding:6px;">
+      <img src="img/plot_sim_temp.svg" alt="Simulación Térmica 72h" style="width:100%; height:100%; max-height:330px; object-fit:contain; border-radius:8px;" onerror="this.src='img/plot_sim_temp.png'">
+    </div>
+    <p class="mt-md" style="font-size:0.9rem;">La temperatura se mantiene dentro de ±1°C del setpoint gracias al control híbrido camisa+Peltier.</p>
+  </div>
+</div>
+
+<!-- SLIDE 12: GRÁFICA BIOMASA -->
+<div class="slide" data-slide="11">
+  <div class="slide-bg-gradient bg-grad-4"></div>
+  <span class="slide-number">12 / 20</span>
+  <div class="slide-content">
+    <div class="slide-tag">Resultado de Simulación</div>
+    <h2>Crecimiento de Biomasa — 72h</h2>
+    <div class="chart-mock" style="height:350px; display:flex; align-items:center; justify-content:center; padding:6px;">
+      <img src="img/plot_sim_biomasa.svg" alt="Simulación Biomasa 72h" style="width:100%; height:100%; max-height:330px; object-fit:contain; border-radius:8px;" onerror="this.src='img/plot_sim_biomasa.png'">
+    </div>
+    <p class="mt-md" style="font-size:0.9rem;">La biomasa crece de 0.5 g/L a ~6.5 g/L, demostrando condiciones óptimas para el cultivo de microalgas.</p>
+  </div>
+</div>
+
+<!-- SLIDE 13: SEÑALES Y SENSORES -->
+<div class="slide" data-slide="12">
+  <div class="slide-bg dim-more"><img src="img/signals.jpg" alt=""></div>
+  <span class="slide-number">13 / 20</span>
+  <div class="slide-content">
+    <div class="slide-tag">Procesamiento de Señales</div>
+    <h2>Señales del Biorreactor</h2>
+    <p class="mb-lg">En un sistema real, los sensores inyectan ruido que debe ser filtrado antes de usarse para control.</p>
+    <div class="card-grid cols-3">
+      <div class="info-card green">
+        <div class="icon-box" style="color:var(--green);">🌡️</div>
+        <h4 style="color:var(--green);">Sensor de Temperatura</h4>
+        <p style="margin-bottom:8px;"><strong>DS18B20 sumergible:</strong> Medición en tiempo real del cultivo. Inyecta ruido térmico blanco y zumbido de red eléctrica.</p>
+        <span class="badge badge-have">Gauss \(\sigma=0.35^\circ\text{C}\) + 50Hz</span>
+      </div>
+      <div class="info-card purple">
+        <div class="icon-box" style="color:#c49eff;">🧪</div>
+        <h4 style="color:#c49eff;">Electrodo de pH</h4>
+        <p style="margin-bottom:8px;"><strong>PH-4502C + E201:</strong> Alta impedancia. El paso de burbujas de aire genera picos espurios violentos e impulsivos.</p>
+        <span class="badge badge-verif">Outliers por burbujeo (~2.5%)</span>
+      </div>
+      <div class="info-card orange">
+        <div class="icon-box" style="color:var(--orange);">☀️</div>
+        <h4 style="color:var(--orange);">Sensor de Radiación</h4>
+        <p style="margin-bottom:8px;"><strong>Sensor PAR / LDR:</strong> Detecta la irradiancia fotosintéticamente activa. Presenta atenuaciones abruptas por nubosidad.</p>
+        <span class="badge badge-est">Caídas por nubes (55% drop)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14: SEÑALES CON RUIDO -->
+<div class="slide" data-slide="13">
+  <div class="slide-bg-gradient bg-grad-5"></div>
+  <span class="slide-number">14 / 20</span>
+  <div class="slide-content">
+    <div class="slide-tag">Simulación de Ruido</div>
+    <h2>Señales Ideales vs. Con Ruido</h2>
+    <div class="card-grid cols-3">
+      <div class="chart-mock" style="padding:4px;"><img src="img/plot_noise_t.svg" alt="Temperatura + Ruido" style="width:100%; height:195px; object-fit:contain; border-radius:6px;" onerror="this.src='img/plot_noise_t.png'"></div>
+      <div class="chart-mock" style="padding:4px;"><img src="img/plot_noise_ph.svg" alt="pH + Outliers" style="width:100%; height:195px; object-fit:contain; border-radius:6px;" onerror="this.src='img/plot_noise_ph.png'"></div>
+      <div class="chart-mock" style="padding:4px;"><img src="img/plot_noise_i.svg" alt="Luz + Nubes" style="width:100%; height:195px; object-fit:contain; border-radius:6px;" onerror="this.src='img/plot_noise_i.png'"></div>
+    </div>
+    <p class="mt-md" style="font-size:0.9rem;">Las señales simuladas replican fielmente los tipos de ruido encontrados en sensores reales.</p>
+  </div>
+</div>
+
+<!-- SLIDE 15: FILTRO IIR -->
+<div class="slide" data-slide="14">
+  <div class="slide-bg-gradient bg-grad-2"></div>
+  <span class="slide-number">15 / 20</span>
+  <div class="slide-content">
+    <div class="two-col col-55-45">
+      <div>
+        <div class="slide-tag">Filtro Digital — Temperatura</div>
+        <h2>Filtro <span class="hl-green">IIR (EMA)</span></h2>
+        <div class="equation-box">\[ y[n] = \alpha\, x[n] + (1 - \alpha)\, y[n{-}1] \]</div>
+        <ul class="styled-list mt-md">
+          <li><strong>Tipo:</strong> Paso bajo recursivo, 1er orden</li>
+          <li><strong>\(\alpha = 0.1\)</strong> (recomendado para sensor de temperatura)</li>
+          <li><strong>Ventaja:</strong> Muy eficiente (1 multiplicación por muestra)</li>
+          <li><strong>Frecuencia de corte:</strong> \(f_c \approx \frac{\alpha f_s}{2\pi}\)</li>
+          <li>Elimina eficazmente la interferencia de 50 Hz</li>
+        </ul>
+      </div>
+      <div>
+        <div class="chart-mock" style="padding:4px; display:flex; align-items:center; justify-content:center;">
+          <img src="img/plot_filter_t.svg" alt="Filtro IIR Temperatura" style="width:100%; height:auto; max-height:280px; object-fit:contain; border-radius:6px;" onerror="this.src='img/plot_filter_t.png'">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 16: FILTRO STM -->
+<div class="slide" data-slide="15">
+  <div class="slide-bg-gradient bg-grad-3"></div>
+  <span class="slide-number">16 / 20</span>
+  <div class="slide-content">
+    <div class="two-col col-55-45">
+      <div>
+        <div class="slide-tag">Filtro Digital — pH</div>
+        <h2>Filtro <span class="hl-purple">Sorted Trimmed Mean</span></h2>
+        <div class="equation-box">\[ y[n] = \text{mean}\!\left(\text{sort}(\text{ventana})[\text{trim}..N{-}\text{trim}]\right) \]</div>
+        <ul class="styled-list mt-md">
+          <li><strong>Tipo:</strong> No lineal, basado en orden estadístico</li>
+          <li><strong>Ventana = 21</strong>, <strong>Recorte = 20%</strong></li>
+          <li><strong>Ventaja:</strong> Inmune a outliers impulsivos (burbujas)</li>
+          <li>Si \(P = 50\%\) → equivale a filtro de mediana</li>
+          <li>Recomendado cuando hay picos espurios</li>
+        </ul>
+      </div>
+      <div>
+        <div class="chart-mock" style="padding:4px; display:flex; align-items:center; justify-content:center;">
+          <img src="img/plot_filter_ph.svg" alt="Filtro STM pH" style="width:100%; height:auto; max-height:280px; object-fit:contain; border-radius:6px;" onerror="this.src='img/plot_filter_ph.png'">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 17: FILTRO MA -->
+<div class="slide" data-slide="16">
+  <div class="slide-bg-gradient bg-grad-4"></div>
+  <span class="slide-number">17 / 20</span>
+  <div class="slide-content">
+    <div class="two-col col-55-45">
+      <div>
+        <div class="slide-tag">Filtro Digital — Luz</div>
+        <h2>Filtro <span class="hl-orange">Promedio Móvil</span></h2>
+        <div class="equation-box">\[ y[n] = \frac{1}{N} \sum_{k=0}^{N-1} x[n-k] \]</div>
+        <ul class="styled-list mt-md">
+          <li><strong>Tipo:</strong> FIR paso bajo</li>
+          <li><strong>Ventana = 15</strong> muestras</li>
+          <li><strong>Ventaja:</strong> Fase lineal (sin distorsión)</li>
+          <li><strong>Primer nulo:</strong> \(f = f_s / N\)</li>
+          <li>Ideal para ruido gaussiano blanco</li>
+        </ul>
+      </div>
+      <div>
+        <div class="chart-mock" style="padding:4px; display:flex; align-items:center; justify-content:center;">
+          <img src="img/plot_filter_i.svg" alt="Filtro MA Luz" style="width:100%; height:auto; max-height:280px; object-fit:contain; border-radius:6px;" onerror="this.src='img/plot_filter_i.png'">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 18: FILTRO RC ANTI-ALIASING -->
+<div class="slide" data-slide="17">
+  <div class="slide-bg dim-more"><img src="img/hardware.jpg" alt=""></div>
+  <span class="slide-number">18 / 20</span>
+  <div class="slide-content">
+    <div class="slide-tag">Filtro Analógico — Anti-aliasing</div>
+    <h2>Filtro RC + ADC ESP32</h2>
+    <div class="two-col" style="gap:30px;">
+      <div>
+        <h3>Circuito RC</h3>
+        <div class="equation-box">\[ f_c = \frac{1}{2\pi R C} \approx 3\text{ Hz} \]</div>
+        <ul class="styled-list">
+          <li>\(R = 10\text{ k}\Omega\), \(C \approx 5.3\text{ \mu F}\)</li>
+          <li>Pendiente: −20 dB/década</li>
+          <li>Previene aliasing antes del ADC</li>
+        </ul>
+      </div>
+      <div>
+        <h3>ADC ESP32</h3>
+        <div class="equation-box">\[ \text{LSB} = \frac{3.3\text{ V}}{2^{12} - 1} = 0.8\text{ mV} \]</div>
+        <ul class="styled-list">
+          <li>12 bits → 4096 niveles</li>
+          <li>\(f_{s,ADC} = 10\text{ Hz}\)</li>
+          <li>INL inherente: ±0.5%</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 19: HARDWARE E IMPLEMENTACIÓN FÍSICA -->
+<div class="slide" data-slide="18">
+  <div class="slide-bg-gradient bg-grad-5"></div>
+  <span class="slide-number">19 / 20</span>
+  <div class="slide-content">
+    <div class="slide-tag">Implementación & Hardware Físico</div>
+    <h2>Hardware Físico: Bombas, Peltier y Filtros</h2>
+    <p class="mb-md">Decisiones críticas de ingeniería para sostener la validez del modelo en el prototipo real:</p>
+    <div class="card-grid cols-2" style="gap:16px;">
+      <div class="info-card cyan">
+        <div class="icon-box" style="color:var(--cyan);">💨</div>
+        <h4 style="color:var(--cyan);">Bomba de Aire (Biológica)</h4>
+        <p><strong>Desgasificación y Carbono:</strong> Retira el \(O_2\) disuelto liberado por fotosíntesis (evitando estrés oxidativo tóxico) y repone \(CO_2\) para mantener el pH y el sustrato \(S\).</p>
+      </div>
+      <div class="info-card green">
+        <div class="icon-box" style="color:var(--green);">🌊</div>
+        <h4 style="color:var(--green);">Bomba de Agua (Física Térmica)</h4>
+        <p><strong>Mezcla Forzada Continua:</strong> Sostiene el modelo de parámetros concentrados (\(T\) homogénea). Evita sobreenfriamiento local (\(< T_{min}\)) en la cara del Peltier.</p>
+      </div>
+      <div class="info-card orange">
+        <div class="icon-box" style="color:var(--orange);">❄️</div>
+        <h4 style="color:var(--orange);">Límite de Corriente Peltier (\(I_{opt}\))</h4>
+        <p><strong>Anti-Efecto Joule:</strong> Como \(Q_{Joule} \propto I_e^2\), superar \(I_{opt} = \frac{\alpha_{TE} T_c}{R_{TE}}\) calentaría el tanque en vez de enfriarlo. El control limita \(I_e \le 4\text{ A}\).</p>
+      </div>
+      <div class="info-card purple">
+        <div class="icon-box" style="color:#c49eff;">⚡</div>
+        <h4 style="color:#c49eff;">Filtro RC Pasivo + DSP ESP32</h4>
+        <p><strong>Anti-Aliasing Físico:</strong> Filtro RC de 1er orden (\(f_c \approx 3\text{ Hz}\)) previo al ADC de 12 bits, complementado por los algoritmos IIR, STM y MA en firmware C++.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 20: CIERRE -->
+<div class="slide" data-slide="19">
+  <div class="slide-bg dim-more"><img src="img/bioreactor.jpg" alt=""></div>
+  <span class="slide-number">20 / 20</span>
+  <div class="slide-content" style="text-align:center;">
+    <div class="slide-tag">Conclusiones · Control II</div>
+    <h1 class="text-gradient" style="margin-bottom:16px;">¡Gracias!</h1>
+    <p class="large" style="margin:0 auto 24px; text-align:center;">El control térmico bio-inspirado mantiene la temperatura en la zona óptima con <span class="hl-green">>90% de eficacia</span>, maximizando la biomasa de <em>Chlorella vulgaris</em>.</p>
+    <div class="card-grid cols-3 mt-lg" style="max-width:840px; margin:0 auto;">
+      <div class="info-card green" style="text-align:center; display:flex; flex-direction:column; align-items:center;">
+        <div class="icon-box" style="color:var(--green);">🧬</div>
+        <h4 style="color:var(--green);">Modelado</h4>
+        <p>4 EDOs Acopladas + Droop, Steele & CTMI Rosso</p>
+      </div>
+      <div class="info-card cyan" style="text-align:center; display:flex; flex-direction:column; align-items:center;">
+        <div class="icon-box" style="color:var(--cyan);">📊</div>
+        <h4 style="color:var(--cyan);">Filtros Digitales</h4>
+        <p>IIR (Temp) · STM (pH) · MA (Luz) + RC (3 Hz)</p>
+      </div>
+      <div class="info-card purple" style="text-align:center; display:flex; flex-direction:column; align-items:center;">
+        <div class="icon-box" style="color:#c49eff;">⚡</div>
+        <h4 style="color:#c49eff);">Factibilidad BOM</h4>
+        <p>Presupuesto verificado ($243.699 COP en compras)</p>
+      </div>
+    </div>
+    <p class="mt-lg" style="color:var(--muted); font-size:0.85rem; margin:24px auto 0;">Iván Meza · Jhon Cárdenas · Santiago Cavadia · Raúl Baytero<br>ALUNA PBR-02 "Aluna Duna" · Universidad del Magdalena · 2026</p>
+  </div>
+</div>
+
+</div><!-- /slides-wrapper -->
+
+<!-- ============================== CHART.JS ============================== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+// ===== Chart.js defaults =====
+Chart.defaults.color = '#8892b0';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.font.size = 10;
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.animation.duration = 800;
+
+function miniChart(id, datasets, xLabel, yLabel, opts) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  return new Chart(el, {
+    type: 'line',
+    data: { datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { padding: 6, font: { size: 9 } } } },
+      scales: {
+        x: { type: 'linear', title: { display: !!xLabel, text: xLabel, font: { size: 9 } }, ticks: { maxTicksLimit: 6, font: { size: 8 } } },
+        y: { title: { display: !!yLabel, text: yLabel, font: { size: 9 } }, ticks: { font: { size: 8 } }, ...(opts?.yScale || {}) }
+      },
+      elements: { point: { radius: 0 }, line: { borderWidth: 1.5 } }
+    }
+  });
+}
+
+function xyPts(xArr, yArr) { return xArr.map((x,i) => ({x, y: yArr[i]})); }
+
+// ===== CTMI Curve =====
+const Ts = [], fTs = [];
+for (let T = 5; T <= 40; T += 0.3) {
+  Ts.push(T);
+  const Tmin=10, Topt=28, Tmax=35;
+  if (T <= Tmin || T >= Tmax) { fTs.push(0); continue; }
+  const num = (T - Tmax) * Math.pow(T - Tmin, 2);
+  const den = (Topt - Tmin) * ((Topt - Tmin) * (T - Topt) - (Topt - Tmax) * (Topt + Tmin - 2 * T));
+  fTs.push(Math.max(0, Math.min(1, num / den)));
+}
+miniChart('chartCTMI', [{ label: 'f(T)', data: xyPts(Ts, fTs), borderColor: '#ff4757', fill: false }], 'T (°C)', 'f(T)', { yScale: { min: -0.05, max: 1.1 } });
+
+// ===== Steele Curve =====
+const Is = [], fIs = [];
+for (let I = 0; I <= 800; I += 5) {
+  Is.push(I);
+  const Iopt = 200;
+  fIs.push(I === 0 ? 0 : (I/Iopt) * Math.exp(1 - I/Iopt));
+}
+miniChart('chartSteele', [{ label: 'f(I)', data: xyPts(Is, fIs), borderColor: '#ff6b35', fill: false }], 'I (µmol)', 'f(I)', { yScale: { min: -0.05, max: 1.1 } });
+
+// ===== Simulation Charts =====
+// Temperature sim (simplified 72h)
+const tSim = [], TSim = [], XSim = [];
+let T_s = 28, X_s = 0.5;
+for (let h = 0; h <= 72; h += 0.5) {
+  tSim.push(h);
+  const hour = h % 24;
+  const G = 800 * Math.max(0, Math.sin(Math.PI * (hour - 6) / 12));
+  const fI = G > 0 ? (G/200)*Math.exp(1-G/200) : 0;
+  let fT_v = 0;
+  if (T_s > 10 && T_s < 35) {
+    const num = (T_s-35)*Math.pow(T_s-10,2);
+    const den = (28-10)*((28-10)*(T_s-28)-(28-35)*(28+10-2*T_s));
+    fT_v = Math.max(0, Math.min(1, num/den));
+  }
+  const mu = 1.1 * 0.8 * fI * fT_v;
+  X_s += (mu * X_s - 0.005 * X_s) * 0.5;
+  X_s = Math.max(0.01, X_s);
+  const Qsolar = 0.3 * 0.04 * G;
+  const dT = (Qsolar + 2 - 9.5*0.04*(T_s-30)) / (998*2e-3*4186+500) * 3600 * 0.5;
+  T_s += dT;
+  if (T_s > 27.5) T_s -= 0.15;
+  if (T_s < 25.5) T_s += 0.1;
+  T_s = Math.max(24, Math.min(30, T_s));
+  TSim.push(T_s);
+  XSim.push(X_s);
+}
+miniChart('chartSimTemp', [
+  { label: 'T cultivo', data: xyPts(tSim, TSim), borderColor: '#00ff88', fill: false },
+  { label: 'T_sp=26.5', data: [{x:0,y:26.5},{x:72,y:26.5}], borderColor: 'rgba(255,255,255,0.4)', borderDash: [5,3], fill: false }
+], 'Tiempo (h)', 'T (°C)');
+
+miniChart('chartSimBiomass', [
+  { label: 'Biomasa X', data: xyPts(tSim, XSim), borderColor: '#00d4ff', fill: false }
+], 'Tiempo (h)', 'X (g/L)');
+
+// ===== Noise / Filter Charts =====
+function gaussR() { let u=0,v=0; while(!u) u=Math.random(); while(!v) v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+
+const N = 500, fs = 10;
+const tN = [], idealT = [], noisyT = [], filtT = [];
+const idealPH = [], noisyPH = [], filtPH = [];
+const idealI_a = [], noisyI_a = [], filtI_a = [];
+
+for (let i = 0; i < N; i++) {
+  const time = i / fs;
+  tN.push(time);
+  // Temp
+  const iT = 26.5 + 2*Math.sin(2*Math.PI*time/180) + 0.5*Math.sin(2*Math.PI*time/60);
+  idealT.push(iT);
+  noisyT.push(iT + gaussR()*0.4 + 0.15*Math.sin(2*Math.PI*5*time));
+  // pH
+  const iPH = 7.5 + 0.3*Math.sin(2*Math.PI*time/240);
+  idealPH.push(iPH);
+  let nPH = iPH + gaussR()*0.05;
+  if (Math.random()<0.02) nPH += (Math.random()<0.5?-1:1)*(0.5+Math.random()*1.5);
+  noisyPH.push(nPH);
+  // Light
+  const iI = 800*Math.max(0, Math.sin(2*Math.PI*time/120));
+  idealI_a.push(iI);
+  noisyI_a.push(Math.max(0, iI + gaussR()*25 - (Math.random()<0.03?Math.random()*200:0)));
+}
+
+// IIR filter
+filtT[0] = noisyT[0];
+for (let i=1;i<N;i++) filtT[i] = 0.1*noisyT[i]+0.9*filtT[i-1];
+
+// STM filter
+for (let i=0;i<N;i++) {
+  const start=Math.max(0,i-10), end=Math.min(N-1,i+10);
+  const buf = [];
+  for(let j=start;j<=end;j++) buf.push(noisyPH[j]);
+  buf.sort((a,b)=>a-b);
+  const tc = Math.floor(0.2*buf.length/2);
+  let sum=0,cnt=0;
+  for(let j=tc;j<buf.length-tc;j++){sum+=buf[j];cnt++;}
+  filtPH.push(cnt>0?sum/cnt:buf[Math.floor(buf.length/2)]);
+}
+
+// MA filter
+let maSum = 0;
+for (let i=0;i<N;i++) {
+  maSum += noisyI_a[i];
+  if (i>=15) maSum -= noisyI_a[i-15];
+  filtI_a.push(maSum / Math.min(i+1, 15));
+}
+
+// Noise charts
+miniChart('chartNoiseT', [
+  { label: 'Ideal', data: xyPts(tN, idealT), borderColor: 'rgba(255,255,255,0.3)', borderWidth: 1, fill: false },
+  { label: 'Con ruido', data: xyPts(tN, noisyT), borderColor: 'rgba(255,71,87,0.6)', borderWidth: 0.8, fill: false }
+], 's', '°C');
+
+miniChart('chartNoisePH', [
+  { label: 'Ideal', data: xyPts(tN, idealPH), borderColor: 'rgba(255,255,255,0.3)', borderWidth: 1, fill: false },
+  { label: 'Con ruido', data: xyPts(tN, noisyPH), borderColor: 'rgba(255,71,87,0.6)', borderWidth: 0.8, fill: false }
+], 's', 'pH');
+
+miniChart('chartNoiseI', [
+  { label: 'Ideal', data: xyPts(tN, idealI_a), borderColor: 'rgba(255,255,255,0.3)', borderWidth: 1, fill: false },
+  { label: 'Con ruido', data: xyPts(tN, noisyI_a), borderColor: 'rgba(255,71,87,0.6)', borderWidth: 0.8, fill: false }
+], 's', 'µmol');
+
+// Filter charts
+miniChart('chartFilterT', [
+  { label: 'Con ruido', data: xyPts(tN, noisyT), borderColor: 'rgba(255,71,87,0.4)', borderWidth: 0.7, fill: false },
+  { label: 'Filtrado IIR', data: xyPts(tN, filtT), borderColor: '#00ff88', borderWidth: 2, fill: false }
+], 's', '°C');
+
+miniChart('chartFilterPH', [
+  { label: 'Con ruido', data: xyPts(tN, noisyPH), borderColor: 'rgba(255,71,87,0.4)', borderWidth: 0.7, fill: false },
+  { label: 'Filtrado STM', data: xyPts(tN, filtPH), borderColor: '#7c3aed', borderWidth: 2, fill: false }
+], 's', 'pH');
+
+miniChart('chartFilterI', [
+  { label: 'Con ruido', data: xyPts(tN, noisyI_a), borderColor: 'rgba(255,71,87,0.4)', borderWidth: 0.7, fill: false },
+  { label: 'Filtrado MA', data: xyPts(tN, filtI_a), borderColor: '#ff6b35', borderWidth: 2, fill: false }
+], 's', 'µmol');
+
+
+// ===== SLIDE ENGINE =====
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let current = 0;
+let autoplay = false;
+let timer = null;
+let secondsLeft = 20;
+
+// Dot nav
+const dotNav = document.getElementById('dotNav');
+for (let i = 0; i < totalSlides; i++) {
+  const dot = document.createElement('div');
+  dot.className = 'dot' + (i === 0 ? ' active' : '');
+  dot.addEventListener('click', () => goTo(i));
+  dotNav.appendChild(dot);
+}
+
+function goTo(n) {
+  slides[current].classList.remove('active');
+  dotNav.children[current].classList.remove('active');
+  current = ((n % totalSlides) + totalSlides) % totalSlides;
+
+
+
+  slides[current].classList.add('active');
+  dotNav.children[current].classList.add('active');
+  document.getElementById('slideCounter').textContent = String(current + 1).padStart(2, '0') + ' / ' + totalSlides;
+  document.getElementById('progressBar').style.width = ((current + 1) / totalSlides * 100) + '%';
+
+  // Re-typeset MathJax for the new slide
+  if (window.MathJax && window.MathJax.typesetPromise) {
+    MathJax.typesetPromise([slides[current]]).catch(function(){});
+  }
+
+  resetTimer();
+}
+
+function next() { goTo(current + 1); }
+function prev() { goTo(current - 1); }
+
+function resetTimer() {
+  secondsLeft = 20;
+  updateTimerUI();
+}
+
+function updateTimerUI() {
+  document.getElementById('timerSec').textContent = secondsLeft + 's';
+  var pct = (1 - secondsLeft / 20) * 100;
+  var circle = document.getElementById('timerCircle');
+  circle.style.strokeDashoffset = pct;
+
+  // Color states: cyan > 10s, orange 5-10s, red < 5s
+  circle.classList.remove('warning', 'danger');
+  if (secondsLeft <= 5) {
+    circle.classList.add('danger');
+    document.getElementById('timerSec').style.color = 'var(--red)';
+  } else if (secondsLeft <= 10) {
+    circle.classList.add('warning');
+    document.getElementById('timerSec').style.color = 'var(--orange)';
+  } else {
+    document.getElementById('timerSec').style.color = 'var(--muted)';
+  }
+}
+
+function tick() {
+  if (!autoplay) return;
+  secondsLeft--;
+  if (secondsLeft <= 0) {
+    if (current < totalSlides - 1) {
+      next();
+    } else {
+      toggleAutoplay();
+    }
+  }
+  updateTimerUI();
+}
+
+function toggleAutoplay() {
+  autoplay = !autoplay;
+  document.getElementById('btnPlayPause').textContent = autoplay ? '⏸' : '▶';
+  if (autoplay) {
+    resetTimer();
+    timer = setInterval(tick, 1000);
+  } else {
+    clearInterval(timer);
+  }
+}
+
+document.getElementById('btnNext').addEventListener('click', next);
+document.getElementById('btnPrev').addEventListener('click', prev);
+document.getElementById('btnPlayPause').addEventListener('click', toggleAutoplay);
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+  if (e.key === 'p' || e.key === 'P') toggleAutoplay();
+});
+
+})();
+</script>
+
+</body>
+</html>

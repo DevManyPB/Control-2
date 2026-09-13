@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>ALUNA PBR - PID Tuner Web</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+</head>
+<body class="bg-slate-100 p-8 font-sans">
+    <div class="max-w-6xl mx-auto space-y-6">
+        <div class="flex items-center justify-between bg-teal-800 p-6 rounded-xl shadow-lg text-white">
+            <h1 class="text-3xl font-bold tracking-wide">🔬 ALUNA PBR-02 <span class="font-light">| Web PID Tuner</span></h1>
+            <p class="text-teal-200">Reemplazo inteligente de MATLAB</p>
+        </div>
+        
+        <!-- Panel de Control -->
+        <div class="bg-white p-6 rounded-xl shadow-md flex flex-wrap gap-6 items-end border border-slate-200">
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 uppercase tracking-wider">Puerto Serie ESP32</label>
+                <div class="flex gap-2 mt-2">
+                    <select id="ports" class="border-2 border-slate-300 rounded-lg px-4 py-2 w-48 focus:border-teal-500 focus:outline-none font-mono text-sm"></select>
+                    <button onclick="refreshPorts()" class="bg-slate-200 text-slate-600 px-3 py-2 rounded-lg hover:bg-slate-300 transition">🔄</button>
+                    <button onclick="connectSerial()" class="bg-teal-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-teal-700 transition shadow-sm">Conectar</button>
+                </div>
+            </div>
+            <div class="border-l-2 border-slate-200 pl-6 flex gap-3">
+                <button onclick="startTest()" class="bg-emerald-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-emerald-600 transition shadow-sm flex items-center gap-2">
+                    ▶ Iniciar Escalón
+                </button>
+                <button onclick="stopTest()" class="bg-rose-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-rose-600 transition shadow-sm flex items-center gap-2">
+                    ⏹ Detener
+                </button>
+            </div>
+            <div class="border-l-2 border-slate-200 pl-6">
+                <button onclick="calculatePI()" class="bg-indigo-600 text-white px-8 py-2 rounded-lg font-bold hover:bg-indigo-700 transition shadow-sm flex items-center gap-2">
+                    🧠 Calcular Kp / Ki Automático
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard de Datos -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                <h2 class="text-xl font-bold text-slate-800 mb-2">Curva de Reacción (En vivo)</h2>
+                <div id="chart" style="width: 100%; height: 450px;"></div>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-indigo-500">
+                    <h2 class="text-lg font-bold text-slate-800 uppercase tracking-wide">Parámetros PI Ideales</h2>
+                    <p class="text-xs text-slate-400 mb-6">Método de Sintonización Cohen-Coon</p>
+                    <div class="space-y-5">
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                            <span class="text-sm font-semibold text-slate-500 uppercase">Proporcional (Kp)</span>
+                            <div class="text-4xl font-black text-indigo-600 mt-1" id="val_kp">0.0000</div>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                            <span class="text-sm font-semibold text-slate-500 uppercase">Integral (Ki)</span>
+                            <div class="text-4xl font-black text-indigo-600 mt-1" id="val_ki">0.0000</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h2 class="text-md font-bold text-slate-800">Física del Biorreactor (FOPDT)</h2>
+                    <ul class="mt-4 space-y-3 text-sm">
+                        <li class="flex justify-between border-b pb-2"><span class="text-slate-600">Ganancia Estática (K):</span> <span class="font-mono font-bold text-slate-800" id="val_k">--</span></li>
+                        <li class="flex justify-between border-b pb-2"><span class="text-slate-600">Inercia Térmica (Tau):</span> <span class="font-mono font-bold text-slate-800" id="val_tau">-- s</span></li>
+                        <li class="flex justify-between pb-1"><span class="text-slate-600">Tiempo Muerto (L):</span> <span class="font-mono font-bold text-slate-800" id="val_l">-- s</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isPolling = false;
+
+        async function refreshPorts() {
+            const res = await fetch('/ports');
+            const ports = await res.json();
+            const select = document.getElementById('ports');
+            select.innerHTML = '';
+            ports.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.textContent = p;
+                select.appendChild(opt);
+            });
+        }
+
+        async function connectSerial() {
+            const port = document.getElementById('ports').value;
+            if(!port) return alert("Selecciona un puerto");
+            const res = await fetch('/connect', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({port: port}) });
+            const data = await res.json();
+            if(data.status === 'success') alert("✅ Conectado exitosamente al ESP32 en " + port);
+            else alert("❌ Error: " + data.message);
+        }
+
+        async function startTest() {
+            const res = await fetch('/start', {method: 'POST'});
+            const data = await res.json();
+            if(data.status === 'error') return alert(data.message);
+            isPolling = true;
+            pollData();
+        }
+
+        async function stopTest() {
+            await fetch('/stop', {method: 'POST'});
+            isPolling = false;
+        }
+
+        async function pollData() {
+            if (!isPolling) return;
+            const res = await fetch('/data');
+            const data = await res.json();
+            updateChart(data.time, data.temp);
+            setTimeout(pollData, 1000);
+        }
+
+        function updateChart(x, y, fit_x = null, fit_y = null) {
+            const trace1 = { x: x, y: y, mode: 'lines+markers', name: 'Temperatura Real', line: {color: '#0f766e', width: 2}, marker: {size: 4} };
+            const data = [trace1];
+            
+            if (fit_x && fit_y) {
+                const trace2 = { x: fit_x, y: fit_y, mode: 'lines', name: 'Ajuste Matemático', line: {color: '#4f46e5', dash: 'dash', width: 3} };
+                data.push(trace2);
+            }
+            const layout = { margin: {t: 10, r: 20, b: 40, l: 50}, xaxis: {title: 'Tiempo (s)'}, yaxis: {title: 'Temperatura (°C)'}, plot_bgcolor: '#f8fafc', paper_bgcolor: '#ffffff', legend: {x: 0.02, y: 0.98} };
+            Plotly.newPlot('chart', data, layout, {responsive: true});
+        }
+
+        async function calculatePI() {
+            const res = await fetch('/calculate');
+            const data = await res.json();
+            if (data.status === 'success') {
+                document.getElementById('val_kp').textContent = data.Kp;
+                document.getElementById('val_ki').textContent = data.Ki;
+                document.getElementById('val_k').textContent = data.K;
+                document.getElementById('val_tau').textContent = data.tau;
+                document.getElementById('val_l').textContent = data.L;
+                
+                const rawRes = await fetch('/data');
+                const rawData = await rawRes.json();
+                updateChart(rawData.time, rawData.temp, data.fit_time, data.fit_temp);
+            } else {
+                alert("⚠️ Error: " + data.message);
+            }
+        }
+
+        refreshPorts();
+        updateChart([], []);
+    </script>
+</body>
+</html>

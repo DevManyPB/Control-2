@@ -1,0 +1,380 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+\title{Manual de Operación y Modelo Matemático \\ Fotobiorreactor ALUNA PBR-02}
+\author{Ingeniería de Control}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Introducción: ¿Qué esperar de este prototipo?}
+Este documento es una guía paso a paso para entender qué esperar cuando se implemente el prototipo físico del fotobiorreactor ALUNA PBR-02. El objetivo de este sistema es cultivar un alga llamada \textit{Chlorella vulgaris} de forma automática.
+
+Para lograrlo, el sistema tiene un ``cerebro'' (un microcontrolador) que lee sensores y toma decisiones sin ayuda humana. El reactor tiene dos grandes mundos que conviven: la \textbf{biología} (cómo comen, crecen y viven las algas) y la \textbf{termodinámica} (cómo se calienta y enfría el agua). Aquí explicaremos cada detalle desde cero para que cualquier persona comprenda cómo la física, la biología y el control automático trabajan en equipo. Además de las ecuaciones ``de fábrica'' del modelo, este documento profundiza en el origen, la física y la biología detrás de cada una de ellas, para que el prototipo no se opere como una caja negra sino como un sistema completamente comprendido.
+
+\tableofcontents
+\newpage
+
+\section{Las Variables del Sistema (El Vector de Estados)}
+Imagina que el biorreactor es un paciente en un hospital. Para saber cómo está de salud, el doctor mira sus signos vitales. En nuestro sistema, esos signos vitales se llaman ``variables de estado''. Son cuatro y juntas forman el vector $x(t) = [X, S, Q, T]^T$:
+
+\subsection{1. Biomasa ($X$)}
+\textbf{¿Qué es?} Es la cantidad de alga viva que está nadando en el tanque. Es literalmente nuestra ``cosecha''.\\
+\textbf{¿En qué se mide?} En \textbf{gramos por litro (g/L)}. Se usa esta unidad porque es la forma más física y real de medirla: si sacamos un litro del agua verde del tanque, filtramos las algas, las secamos al sol y las pesamos en una balanza, obtendremos exactamente esta cantidad en gramos.
+
+\subsection{2. Sustrato ($S$)}
+\textbf{¿Qué es?} Es la comida que está flotando en el agua, lista para que el alga se la coma. En este caso, es el Carbono (proveniente del CO$_2$ disuelto).\\
+\textbf{¿En qué se mide?} En \textbf{milimoles por litro (mmol/L)}. En química, los moles son como ``paquetes'' de moléculas. Usamos esta unidad porque nos interesa saber exactamente cuántos de estos paquetitos de comida hay en un litro de agua, independientemente de cuánto pesen.
+
+\subsection{3. Cuota Interna ($Q$)}
+\textbf{¿Qué es?} Es la ``despensa'' o el estómago de cada célula de alga. Las algas son inteligentes: cuando hay mucha comida en el agua, comen de más y la guardan adentro de ellas.\\
+\textbf{¿En qué se mide?} En \textbf{milimoles de carbono por gramo de alga (mmol C/g)}. Nos dice cuántos paquetitos de comida tiene guardados un gramo de alga en su interior. Gracias a esto, si un día se acaba la comida en el agua, el alga no muere de hambre inmediatamente; usa su despensa.
+
+\subsection{4. Temperatura ($T$)}
+\textbf{¿Qué es?} Qué tan caliente o fría está el agua del cultivo.\\
+\textbf{¿En qué se mide?} En \textbf{grados Celsius ($^\circ$C)}. Es la medida estándar de todos nuestros sensores térmicos.
+
+\section{El Mundo Biológico: ¿Cómo crecen las algas?}
+La velocidad a la que las algas se multiplican se llama \textbf{tasa de crecimiento} y se representa con la letra griega $\mu$ (mu). Las algas necesitan tres cosas para crecer rápido: comida, luz y un clima agradable.
+
+\subsection{La Ecuación del Crecimiento}
+\begin{equation}
+\mu(Q,I,T) = \mu_{max}^* \left(1 - \frac{Q_{min}}{Q}\right) \cdot f(I) \cdot f(T)
+\end{equation}
+\textbf{Explicación término a término:}
+\begin{itemize}
+    \item $\mu_{max}^*$: Es la velocidad máxima teórica a la que el alga se reproduciría si estuviera en el paraíso (luz perfecta, comida infinita, clima ideal).
+    \item $\left(1 - \frac{Q_{min}}{Q}\right)$: Es el efecto de la despensa. Si la despensa ($Q$) está vacía y llega al mínimo vital ($Q_{min}$), este término se vuelve cero y el alga deja de crecer. Esta forma particular viene del modelo de cuota de Droop (1968), el clásico de la cinética de nutrientes en microalgas.
+    \item $f(I)$: Es el efecto de la luz.
+    \item $f(T)$: Es el efecto de la temperatura.
+\end{itemize}
+
+\subsection{El Efecto de la Luz y la Fotoinhibición}
+La luz ($I$) le da energía al alga mediante la fotosíntesis. La ecuación matemática que modela esto (Modelo de Steele) es:
+\begin{equation}
+f(I) = \frac{I}{I_{opt}} \exp\left(1 - \frac{I}{I_{opt}}\right)
+\end{equation}
+\textbf{¿Qué es la Fotoinhibición?} Imagina que sales a tomar el sol. Un poco de sol en la mañana es bueno y te da energía. Pero si te quedas al mediodía sin bloqueador, te quemas, te duele la piel y tienes que esconderte. A las algas les pasa exactamente lo mismo. Tienen un nivel de luz perfecto ($I_{opt}$). Si la luz del sol supera ese límite, sus ``paneles solares'' (los cloroplastos) se queman y se dañan. Cuando esto pasa, el alga se estresa y deja de crecer para protegerse. A esto se le llama fotoinhibición.
+
+\subsubsection{Profundizando: el Modelo de Steele (1962)}
+La ecuación (2) no se inventó para este proyecto: fue propuesta por J.H. Steele en 1962, en un trabajo clásico sobre fotosíntesis del fitoplancton marino, y desde entonces se ha convertido en una de las formas más usadas en el mundo para describir la fotoinhibición en algas y microalgas.
+
+Para entender por qué tiene esta forma tan particular, es útil compararla con los modelos ``de saturación pura'' (como el de Monod), que describen la luz de forma incompleta:
+\begin{equation}
+f_{sat}(I) = \frac{I}{I_k + I}
+\end{equation}
+Este tipo de curva sube con la luz y luego se queda plana en 1 para siempre, sin importar cuánta luz extra reciba la célula. Describe bien la zona de poca luz, pero se equivoca en un punto crítico: en la realidad, a luz extrema el rendimiento de la célula \textbf{cae}, no se mantiene. Steele resolvió este problema multiplicando el crecimiento inicial por un término de castigo exponencial que ``apaga'' el sistema cuando hay demasiada luz.
+
+\textbf{Analicemos la ecuación (2) en tres puntos clave:}
+\begin{itemize}
+    \item \textbf{En $I=0$ (oscuridad total):} $f(0)=0$. Sin fotones no hay fotosíntesis. Es obvio, pero confirma que el modelo es consistente con la realidad física.
+    \item \textbf{En $I=I_{opt}$:} $f(I_{opt}) = \frac{I_{opt}}{I_{opt}}\exp(1-1) = 1 \cdot \exp(0) = 1$. Aquí el alga rinde al 100\% de su capacidad fotosintética; este es, por definición, el punto más alto de la curva.
+    \item \textbf{Cuando $I \to \infty$:} aunque el término $I/I_{opt}$ sigue creciendo sin límite, la exponencial $\exp(1-I/I_{opt})$ decae mucho más rápido de lo que crece ese término lineal (``la exponencial siempre le gana a la recta''). El resultado es que $f(I) \to 0$: a luz extrema, el rendimiento colapsa por completo, sin importar cuánta energía luminosa reciba la célula.
+\end{itemize}
+
+Podemos confirmar matemáticamente que $I_{opt}$ es en efecto el máximo, derivando $f(I)$ e igualando a cero:
+\begin{equation}
+\frac{df}{dI} = \frac{1}{I_{opt}}\exp\left(1-\frac{I}{I_{opt}}\right)\left(1-\frac{I}{I_{opt}}\right) = 0
+\end{equation}
+Esta expresión únicamente se anula cuando $I=I_{opt}$, confirmando con cálculo lo que la intuición ya sugería.
+
+\textbf{Tabla de referencia (forma adimensional de la curva):}
+\begin{center}
+\begin{tabular}{cccccc}
+\toprule
+$I/I_{opt}$ & 0.25 & 0.5 & 1.0 & 1.5 & 2.0 \\
+\midrule
+$f(I)$ & 0.32 & 0.60 & 1.00 & 0.83 & 0.54 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+    width=11cm, height=6.5cm,
+    xlabel={$I/I_{opt}$ (luz relativa al óptimo)},
+    ylabel={$f(I)$ (rendimiento relativo)},
+    xmin=0, xmax=4, ymin=0, ymax=1.1,
+    grid=major,
+    axis lines=left,
+    legend pos=north east,
+]
+\addplot[domain=0:4, samples=100, thick, blue] {x*exp(1-x)};
+\addplot[only marks, mark=*, red] coordinates {(1,1)};
+\node[anchor=south west] at (axis cs:1,1) {\footnotesize $I_{opt}$: máximo};
+\draw[dashed, gray] (axis cs:2,0) -- (axis cs:2,1.1);
+\node[anchor=north, gray] at (axis cs:2.6,0.9) {\footnotesize Zona de fotoinhibición fuerte};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+\textbf{¿Qué está pasando físicamente dentro de la célula?} La fotoinhibición no es simple ``cansancio''. El mecanismo biológico detrás de esta caída se centra en una proteína llamada \textbf{D1}, parte del Fotosistema II (uno de los complejos moleculares que capturan luz dentro de los cloroplastos). Con luz normal, la célula rompe y repara constantemente pequeñas cantidades de proteína D1 como parte de su funcionamiento habitual: es un ciclo continuo de daño y reparación. El problema aparece cuando la luz es excesiva: el ritmo de daño supera la velocidad con la que la célula puede fabricar y reemplazar proteína D1 nueva. El resultado neto es una acumulación de fotosistemas dañados que ya no pueden realizar fotosíntesis, lo que se traduce directamente en la caída de rendimiento que observamos en la curva de Steele.
+
+Este detalle es relevante para el ALUNA PBR-02: la fotoinhibición no se revierte instantáneamente. Si el cultivo pasa demasiado tiempo por encima de $I_{opt}$, el daño se acumula y la recuperación toma tiempo, incluso después de bajar la intensidad lumínica. Por eso el control de luz, igual que el de temperatura, debe evitar sobrepasos prolongados y no solo picos instantáneos.
+
+\subsection{El Efecto del Clima (La Ecuación de Temperatura)}
+El calor afecta la vida. La ecuación matemática (Modelo de Rosso et al.) para esto es:
+\begin{equation}
+f(T) = \frac{(T-T_{max})(T-T_{min})^2}{(T_{opt}-T_{min}) \left[ (T_{opt}-T_{min})(T-T_{opt}) - (T_{opt}-T_{max})(T_{opt}+T_{min}-2T) \right]}
+\end{equation}
+\textbf{Explicación simple:} Esta ecuación es como una montaña rusa. Si el agua está muy fría (por debajo de $T_{min} = 10^\circ$C), las algas se congelan y duermen; no crecen. A medida que el agua se calienta, se ponen felices y crecen cada vez más rápido hasta llegar a la cima de la montaña, que es su temperatura óptima ($T_{opt} = 28^\circ$C). Pero mucho cuidado: si te pasas del óptimo, la caída de la montaña rusa es violenta. Si el agua llega a $35^\circ$C ($T_{max}$), las células hierven por dentro y mueren.
+
+\subsubsection{Profundizando: el Modelo Cardinal con Inflexión (CTMI) de Rosso et al.}
+La ecuación (5) tampoco es un invento aislado para este proyecto: es el \textbf{Modelo Cardinal de Temperatura con Inflexión} (CTMI, por sus siglas en inglés), propuesto originalmente por Rosso, Lobry y Flandrois en 1993 para describir cómo la temperatura afecta la velocidad de crecimiento de bacterias. Casi veinte años después, Bernard y Rémond (2012) demostraron que este mismo modelo, sin cambios estructurales, describe también extraordinariamente bien el crecimiento de microalgas y fitoplancton --incluyendo \textit{Chlorella vulgaris}--, razón por la cual hoy es uno de los modelos estándar en el diseño y control de fotobiorreactores.
+
+\textbf{¿Por qué se llama ``cardinal''?} Porque el modelo se construye alrededor de tres temperaturas cardinales, que son puntos biológicos reales y medibles, no simples parámetros de ajuste matemático:
+\begin{itemize}
+    \item $T_{min}$: la temperatura por debajo de la cual el alga deja de crecer. No es que muera instantáneamente; su maquinaria enzimática se vuelve demasiado lenta y las membranas celulares pierden la fluidez necesaria para funcionar.
+    \item $T_{opt}$: la temperatura a la que toda la maquinaria metabólica trabaja en su punto más eficiente.
+    \item $T_{max}$: la temperatura por encima de la cual las proteínas de la célula comienzan a desnaturalizarse de forma irreversible --es un límite letal, no solo un freno.
+\end{itemize}
+
+\textbf{¿Por qué la ecuación no es una simple campana simétrica (como una Gaussiana)?} Observa que en la ecuación (5) el término $(T-T_{min})^2$ está elevado al cuadrado, mientras que $(T-T_{max})$ no lo está. Esta asimetría no es un capricho matemático: refleja un hecho biológico real. El estrés por frío afecta a la célula de forma gradual --las reacciones químicas simplemente se hacen más lentas mientras más frío hace, como un motor al ralentí. El estrés por calor, en cambio, es un fenómeno de umbral: las proteínas se pliegan correctamente hasta cierto punto, y luego, en un rango de pocos grados, se desnaturalizan de forma abrupta e irreversible. El modelo CTMI captura esta forma asimétrica (subida lenta, caída brusca) mucho mejor que una campana simétrica clásica. El denominador simplemente normaliza la curva para que en $T=T_{opt}$ el resultado sea exactamente $f(T_{opt})=1$, es decir, el 100\% del rendimiento térmico posible.
+
+\textbf{Tabla de valores para el caso ALUNA} ($T_{min}=10^\circ$C, $T_{opt}=28^\circ$C, $T_{max}=35^\circ$C):
+\begin{center}
+\footnotesize
+\begin{tabular}{ccccccccc}
+\toprule
+$T\;(^\circ$C$)$ & 10 & 15 & 20 & 25 & 28 & 30 & 32.5 & 35\\
+\midrule
+$f(T)$ & 0.00 & 0.18 & 0.47 & 0.83 & 1.00 & 0.86 & 0.36 & 0.00\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+    width=12cm, height=6.5cm,
+    xlabel={Temperatura $T$ ($^\circ$C)},
+    ylabel={$f(T)$ (rendimiento relativo)},
+    xmin=8, xmax=37, ymin=0, ymax=1.1,
+    grid=major,
+    axis lines=left,
+]
+\fill[orange!15] (axis cs:27,0) rectangle (axis cs:35,1.1);
+\node[orange!70!black, anchor=north, align=center] at (axis cs:31,0.55) {\footnotesize Rango ambiental\\ \footnotesize típico de Santa Marta\\ \footnotesize ($27$--$40^\circ$C)};
+\addplot[domain=10.01:34.99, samples=200, thick, red] {
+  ((x-35)*(x-10)^2) / ( (28-10) * ( (28-10)*(x-28) - (28-35)*(28+10-2*x) ) )
+};
+\addplot[only marks, mark=*, blue] coordinates {(28,1)};
+\node[anchor=south east, blue] at (axis cs:27.7,1) {\footnotesize $T_{opt}=28^\circ$C};
+\draw[dashed, gray] (axis cs:10,0) -- (axis cs:10,1.1);
+\node[anchor=north west, gray] at (axis cs:10,1.05) {\footnotesize $T_{min}$};
+\draw[dashed, gray] (axis cs:35,0) -- (axis cs:35,1.1);
+\node[anchor=north east, gray] at (axis cs:35,1.05) {\footnotesize $T_{max}$};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+\textbf{Por qué esto es crítico para Santa Marta:} a diferencia de un laboratorio en clima templado (donde el reto habitual es mantener el cultivo caliente), en Santa Marta la temperatura ambiente típica oscila entre $27^\circ$C y $40^\circ$C. Al ver la banda sombreada en la gráfica, es evidente que este rango cae casi por completo en el lado \textbf{derecho} de la curva --justo donde $f(T)$ cae de forma abrupta hacia cero al acercarse a $T_{max}$, e incluso sobrepasa el límite letal del modelo. En otras palabras: en Santa Marta el fotobiorreactor casi nunca está en riesgo de morir de frío, pero sí está permanentemente cerca --o por encima-- del borde letal por calor. Este resultado no es exclusivo de este proyecto: estudios de modelado térmico de fotobiorreactores al aire libre han encontrado que, en climas cálidos, la temperatura del cultivo puede superar fácilmente los $40^\circ$C, muy por encima del máximo tolerado por la mayoría de especies de microalgas de cultivo comercial. Esta es la justificación biológica directa de la decisión de diseño de priorizar el enfriamiento activo (Peltier) sobre cualquier mecanismo de calefacción.
+
+\subsection{La necesidad de respirar (Burbujeo)}
+\begin{equation}
+\frac{dS}{dt} = - \text{Consumo de comida}
+\end{equation}
+En nuestra simulación matemática básica, el sustrato ($S$) simplemente se va acabando. Pero en la vida real, un biorreactor \textbf{debe tener un motor que burbujee aire o CO$_2$ todo el tiempo}. ¿Por qué? Primero, para rellenar la comida (el carbono) que las algas se están comiendo. Segundo, porque las algas al hacer fotosíntesis ``eructan'' Oxígeno. Si no burbujeamos el tanque, el oxígeno se acumula, intoxica a las algas y las mata. El burbujeo limpia el tanque de oxígeno y lo llena de carbono nuevo.
+
+\section{El Mundo Térmico: Protegiendo a las algas del calor}
+Para evitar que las algas mueran de calor (llegando a $T_{max}$), el sistema tiene que vigilar la temperatura todo el tiempo. El sol, las luces artificiales y hasta el metabolismo de las propias algas calientan el agua.
+
+Para pelear contra el calor, el ALUNA PBR-02 usa dos armas:
+\subsection{Arma 1: La Camisa Aislante $U(s)$}
+Es un mecanismo físico que rodea el tanque. Tiene una variable llamada $s$.
+\begin{itemize}
+    \item Cuando \textbf{$s = 0$}, la camisa está abierta. El tanque está "desnudo" y el calor puede escaparse con el viento.
+    \item Cuando \textbf{$s = 1$}, la camisa se cierra. Es como ponerle un abrigo de invierno al tanque. Atrapa la temperatura para que no cambie rápido.
+\end{itemize}
+
+\subsubsection{Biomimética invertida: la lógica del frailejón en el contexto de Santa Marta}
+El nombre ``Aluna Duna'' y el concepto de la camisa aislante nacen de observar cómo el frailejón (género \textit{Espeletia}) resuelve un problema térmico en el páramo andino, típicamente por encima de los 3\,000--4\,000 msnm, donde las noches pueden llegar a temperaturas bajo cero. Su estrategia de supervivencia se apoya en varios mecanismos de aislamiento, documentados en la literatura ecofisiológica, todos orientados a un mismo objetivo: \textbf{retener el calor} y proteger al tejido vivo del frío extremo:
+\begin{itemize}
+    \item Sus hojas están cubiertas de una vellosidad densa (pubescencia) que atrapa una capa de aire quieto alrededor de la hoja, funcionando como un abrigo térmico, de forma similar al plumón de un ave.
+    \item Sus hojas muertas permanecen adheridas al tallo (marcescencia), formando una especie de ``falda'' que envuelve y protege el tejido vivo interior del tallo contra las heladas.
+    \item Por dentro, el tallo tiene una médula con alto contenido de agua que actúa como un depósito o ``capacitor'' térmico e hídrico: almacena agua y energía durante el día y las libera lentamente durante la noche, amortiguando los cambios bruscos de temperatura.
+\end{itemize}
+En resumen: en el frailejón, todo el diseño biológico está orientado a que el calor \textbf{no se escape}.
+
+\textbf{¿Por qué en Santa Marta hay que invertir esta lógica?} Porque el problema climático es exactamente el opuesto. En el páramo, el enemigo es el frío; en Santa Marta, con temperaturas ambiente entre $27^\circ$C y $40^\circ$C, el enemigo es el calor. De hecho, los propios frailejones son plantas de clima frío y no toleran bien ambientes cálidos: cultivadores y estudios de campo reportan que la mayoría de las especies no prosperan donde las temperaturas nocturnas superan aproximadamente los $20^\circ$C, un umbral muy por debajo del rango en el que debe operar nuestro fotobiorreactor.
+
+Por eso el ALUNA PBR-02 no copia literalmente el mecanismo del frailejón: copia su \textbf{principio de ingeniería} --usar una capa aislante activada de forma inteligente según la diferencia de temperatura entre el interior y el exterior-- pero invierte por completo la lógica de activación:
+\begin{itemize}
+    \item \textbf{Frailejón (páramo, frío):} cierra su aislamiento (hojas, vellosidad) cuando hace frío afuera, para no perder el calor interno acumulado.
+    \item \textbf{ALUNA PBR-02 (Santa Marta, calor):} cierra la camisa aislante ($s=1$) cuando el tanque ya está más fresco que el ambiente exterior --por ejemplo, tras una noche de enfriamiento-- para \textbf{no dejar entrar} el calor del entorno y así conservar esa frescura ganada el mayor tiempo posible. Y la abre ($s=0$) cuando, por el contrario, es momentáneamente ventajoso dejar que el tanque disipe calor hacia el ambiente (por ejemplo, en horas de la madrugada con viento fresco).
+\end{itemize}
+La camisa nunca genera frío por sí misma, igual que las hojas del frailejón nunca generan calor por sí mismas. Su función real es actuar como una \textbf{válvula térmica}: regula la velocidad a la que el calor entra o sale del tanque, protegiendo la ``reserva de frescura'' del cultivo de la misma forma en que el frailejón protege su reserva de calor. Es biomimética de \textit{principio}, no de mecanismo literal: se invierte la dirección de la lógica de control, pero se conserva la idea central --aislar de forma adaptativa según hacia dónde fluye el peligro térmico.
+
+\subsection{Arma 2: El Módulo Peltier ($\dot{Q}_{Pelt}$)}
+Es una placa electrónica mágica: si le inyectas electricidad (corriente $I_e$), una de sus caras se pone muy fría y la otra muy caliente. Pegamos la cara fría al tanque para enfriar el agua. Su ecuación es:
+\begin{equation}
+\dot{Q}_{Pelt} = \alpha_{TE} I_e T_c - \frac{1}{2} I_e^2 R_{TE} + \text{Fugas pasivas}
+\end{equation}
+\textbf{Explicación de sus partes:}
+\begin{itemize}
+    \item \textbf{El enfriador (Efecto Seebeck):} Es el primer término ($\alpha_{TE} I_e T_c$). Mientras más electricidad le des, más enfría.
+    \item \textbf{La estufa indeseada (Efecto Joule):} Es el segundo término ($- \frac{1}{2} I_e^2 R_{TE}$). Todos los cables del mundo se calientan cuando les pasa electricidad. El problema es que este calentamiento crece al cuadrado ($I_e^2$).
+    \item \textbf{El límite:} Si le inyectas demasiada electricidad a la placa buscando que enfríe muchísimo, la ``estufa'' le ganará al ``enfriador'' y la placa terminará cocinando a las algas. Por eso existe una \textbf{corriente eléctrica óptima} que nunca debemos sobrepasar.
+\end{itemize}
+
+\subsubsection{Profundizando: la física del efecto Peltier}
+Para entender de verdad la ecuación (7), primero hay que entender qué ocurre dentro de la pastilla a nivel físico.
+
+Una pastilla Peltier está construida con decenas de pequeños bloques de un material semiconductor (típicamente Telurio de Bismuto, Bi$_2$Te$_3$), organizados en pares: un bloque tipo ``P'' (donde los portadores de carga mayoritarios son huecos) y un bloque tipo ``N'' (donde los portadores mayoritarios son electrones). Estos pares están conectados eléctricamente en serie pero térmicamente en paralelo, entre dos placas cerámicas: una que quedará fría y otra que quedará caliente.
+
+Cuando se hace circular corriente eléctrica a través de estos pares, los portadores de carga deben absorber energía térmica de la red cristalina para poder saltar al nivel de energía más alto que necesitan en el material vecino. Al hacerlo en la unión fría, ``roban'' calor de esa placa; al llegar a la unión caliente, liberan esa misma energía en forma de calor. Este fenómeno --consecuencia directa del efecto Seebeck, por reciprocidad termodinámica (relaciones de Thomson)-- es lo que llamamos \textbf{efecto Peltier}: el bombeo de calor de un lado a otro impulsado únicamente por corriente eléctrica, sin partes móviles.
+
+\textbf{El balance de calor completo.} La forma más completa de la ecuación de calor extraído en el lado frío, siguiendo el modelo clásico de Ioffe (base de la mayoría de las hojas de datos de fabricantes de módulos Peltier), es:
+\begin{equation}
+\dot{Q}_c = \alpha_{TE} I_e T_c - \frac{1}{2} I_e^2 R_{TE} - K_{TE}(T_h - T_c)
+\end{equation}
+Comparando con la ecuación (7) del modelo original: el primer y segundo término son exactamente los mismos, y lo que ahí se llamó genéricamente ``fugas pasivas'' corresponde precisamente al tercer término aquí, $K_{TE}(T_h-T_c)$.
+
+\textbf{Explicación física de cada término:}
+\begin{itemize}
+    \item \textbf{Bombeo Peltier ($\alpha_{TE} I_e T_c$):} el calor efectivamente bombeado desde el lado frío, proporcional tanto a la corriente como a la temperatura \textbf{absoluta} (en Kelvin) del lado frío. El coeficiente $\alpha_{TE}$ (coeficiente de Seebeck del módulo, en V/K) depende del material semiconductor y de cuántos pares termoeléctricos tiene la pastilla.
+    \item \textbf{Calentamiento Joule ($-\frac{1}{2}I_e^2 R_{TE}$):} toda resistencia eléctrica genera calor al paso de corriente ($P=I^2R$), y este calor se genera \textit{dentro} del propio material semiconductor. Como se produce en el centro de la pastilla, aproximadamente la mitad de ese calor fluye hacia el lado frío (restándose del bombeo útil) y la otra mitad hacia el lado caliente; de ahí el factor $\frac{1}{2}$.
+    \item \textbf{Fuga por conducción ($K_{TE}(T_h-T_c)$):} el mismo material que bombea calor eléctricamente también es un conductor térmico pasivo. Esto significa que, todo el tiempo, una parte del calor del lado caliente se ``cuela'' de vuelta hacia el lado frío por simple conducción térmica, en la dirección opuesta al bombeo. Esta fuga solo depende de la diferencia de temperatura entre las dos caras, no de la corriente.
+\end{itemize}
+
+Este último punto tiene una consecuencia práctica crucial para el prototipo: si el disipador de calor del lado caliente no es suficientemente bueno (poco flujo de aire, mal contacto térmico), $T_h$ sube, la diferencia $(T_h-T_c)$ crece, y la fuga por conducción ``ahoga'' cada vez más el rendimiento neto del módulo, incluso si la corriente eléctrica es la correcta. Un Peltier mal disipado en su cara caliente jamás va a enfriar bien, sin importar cuánta corriente se le entregue.
+
+\subsubsection{La corriente óptima: el límite entre enfriar y calentar}
+La ecuación (8) tiene una consecuencia matemática que explica por qué existe una corriente eléctrica óptima, tal como se menciona en la sección de control.
+
+El término de bombeo útil crece de forma \textbf{lineal} con la corriente ($\propto I_e$), mientras que el calentamiento Joule crece de forma \textbf{cuadrática} ($\propto I_e^2$). Al principio, cuando $I_e$ es pequeña, el bombeo lineal domina y el enfriamiento neto aumenta rápidamente. Pero como el término cuadrático crece mucho más rápido, llega un punto en el que el calentamiento Joule empieza a ``comerse'' las ganancias del bombeo, y más allá de ese punto, seguir subiendo la corriente en realidad \textbf{reduce} el enfriamiento neto --hasta el punto de que el módulo puede terminar calentando en vez de enfriar.
+
+Podemos encontrar este punto óptimo derivando $\dot{Q}_c$ respecto a $I_e$ e igualando a cero (el término de fuga por conducción no depende de $I_e$, así que desaparece al derivar):
+\begin{equation}
+\frac{d\dot{Q}_c}{dI_e} = \alpha_{TE} T_c - I_e R_{TE} = 0 \quad \Rightarrow \quad I_{opt} = \frac{\alpha_{TE}\, T_c}{R_{TE}}
+\end{equation}
+Esta $I_{opt}$ es la corriente que produce la \textbf{máxima extracción de calor posible} (máxima potencia de enfriamiento) para ese módulo, a esa temperatura. Superarla no es solo ineficiente: empeora activamente el enfriamiento.
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+    width=11cm, height=6.5cm,
+    xlabel={Corriente $I_e$ (A) -- valores ilustrativos},
+    ylabel={$\dot{Q}_c$ (W) -- calor neto extraído},
+    xmin=0, xmax=17, ymin=-15, ymax=55,
+    grid=major,
+    axis lines=left,
+]
+\addplot[domain=0:16.7, samples=100, thick, purple] {12*x - 0.75*x^2 - 2};
+\addplot[only marks, mark=*, red] coordinates {(8,46)};
+\node[anchor=south, red] at (axis cs:8,46) {\footnotesize $I_{opt}$: máximo enfriamiento};
+\draw[dashed, gray] (axis cs:0,0) -- (axis cs:17,0);
+\node[anchor=north, gray] at (axis cs:13,-1) {\footnotesize Aquí ya calienta};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+\textit{Nota:} existe además una segunda corriente óptima, más baja que $I_{opt}$, que maximiza no la potencia de enfriamiento sino la \textbf{eficiencia energética} del módulo (su Coeficiente de Desempeño, COP $= \dot{Q}_c / P_{elec}$). En la práctica, un buen controlador --como la lógica difusa mencionada a continuación-- no necesariamente busca $I_{opt}$ a toda costa, sino un punto de trabajo que equilibre velocidad de enfriamiento con consumo energético, evitando siempre acercarse al límite donde $\dot{Q}_c$ empieza a caer.
+
+\section{Control Autónomo: El Cerebro del Sistema}
+\textbf{No se necesita a un humano operando esto.} El biorreactor tiene un microcontrolador (un cerebro electrónico) que toma decisiones por sí solo en fracciones de segundo:
+
+\begin{enumerate}
+    \item \textbf{Decisión de la Camisa:} El cerebro mira el termómetro y mira el reloj. Si está haciendo mucho frío en la madrugada, manda una señal para cerrar el abrigo ($s=1$). Si hace mucho sol al mediodía y el agua se está calentando, abre el abrigo ($s=0$) para que el calor escape. En el caso concreto de Santa Marta, esta lógica opera mayoritariamente en su forma ``invertida'' descrita en la Sección 3.1.1: cerrar para proteger la frescura ganada, abrir para disipar el exceso de calor.
+    \item \textbf{Decisión del Peltier:} Para que la placa enfriadora no se sobrecaliente y queme a las algas (por el Efecto Joule), el cerebro utiliza inteligencia artificial básica llamada \textbf{Lógica Difusa}. Este código matemático calcula exactamente cuánta electricidad inyectarle a la placa dependiendo de qué tan lejos estemos de la temperatura ideal ($26.5^\circ$C), asegurando que nunca inyecte electricidad de más, manteniéndose siempre por debajo de la corriente $I_{opt}$ definida en la ecuación (9).
+\end{enumerate}
+
+\section{Lista de Materiales, Presupuesto y Viabilidad}
+Esta sección reúne las decisiones prácticas de implementación: qué comprar, cómo justificar cada componente frente al modelo, y si el proyecto es viable en tiempo y presupuesto para un semestre académico.
+
+\subsection{Lista de materiales (BOM)}
+La Tabla~\ref{tab:bom} agrupa los componentes por función dentro del sistema, con precios actualizados y cotizados directamente por el equipo en agosto de 2026. Los ítems marcados como ``Ya tienes'' corresponden a componentes que el equipo ya adquirió previamente y no representan costo adicional. Cuando hay varias unidades del mismo componente cotizadas por distintos proveedores, se reporta la fuente verificada más reciente.
+
+\begin{center}
+\footnotesize
+\textit{Tabla 1: Lista de materiales actualizada, agosto de 2026.}\\[4pt]
+\begin{tabular}{p{6.3cm}p{2.3cm}p{2.6cm}}
+\toprule
+\textbf{Componente} & \textbf{Precio (COP)} & \textbf{Origen} \\
+\midrule
+\multicolumn{3}{l}{\textit{Sensado}} \\
+Sensor DS18B20 sumergible (temperatura del cultivo) & \$12.300 & Verificado \\
+Módulo sensor de pH PH-4502C + electrodo E201 & \$112.999 & Verificado \\
+Sensor DHT22 (temperatura/humedad ambiente) & \$20.900 & Estimado \\
+\midrule
+\multicolumn{3}{l}{\textit{Actuación térmica}} \\
+Celda Peltier TEC1-12706 (12V, 6A, Qcmax 58-60W) & \$21.600 & Cotizado \\
+Disipador + ventilador tipo CPU cooler (lado caliente) & \$0 & Ya tienes \\
+Placa/bloque de aluminio + pasta térmica (lado frío) & \$0 & Incluido en kit \\
+Módulo driver PWM/MOSFET para el Peltier & \$0 & Ya tienes \\
+\midrule
+\multicolumn{3}{l}{\textit{Actuación mecánica (camisa)}} \\
+Servomotor MG996R (11 kg-cm, engranaje metálico) & \$26.000 & Cotizado \\
+Material de la camisa (ver opciones abajo) & \$0 & Ya tienes \\
+\midrule
+\multicolumn{3}{l}{\textit{Aireación y circulación}} \\
+Bomba de aire + piedra difusora + manguera (combo) & \$34.900 & Cotizado \\
+Mini bomba de agua sumergible & \$15.000 & Cotizada \\
+\midrule
+\multicolumn{3}{l}{\textit{Control y potencia}} \\
+ESP32 DevKit V1 (WROOM-32) & \$0 & Ya tienes \\
+Fuente conmutada 12V 10A (120W) & \$0 & Ya tienes \\
+Regulador buck 12V $\to$ 5V & \$0 & Ya tienes \\
+\midrule
+\multicolumn{3}{l}{\textit{Vasija y consumibles} (pendiente de cotizar por el equipo)} \\
+Tanque/tubo transparente (acrílico o PET, grado alimenticio) & \$60.000 & Estimado \\
+Consumibles (cables, terminales, prensaestopas, fusibles) & \$30.000 & Estimado \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Subtotal de ítems por comprar (según cotización del equipo): \$243.699 COP} (sin envío, sin vasija/consumibles). Sumando la vasija y los consumibles al costo estimado anterior (\$90.000 COP, aún sin cotizar por el equipo), el subtotal general queda en \textbf{\$333.699 COP}.
+
+Aplicando el 15--20\% de contingencia recomendado para imprevistos y flete a Santa Marta sobre este subtotal general, el presupuesto total queda en \textbf{\$383.754 -- \$400.439 COP} (aprox. USD 91--95).
+
+\textit{Nota de verificación:} si se calcula la contingencia únicamente sobre los \$243.699 COP de ítems por comprar (sin incluir vasija ni consumibles), el rango resultante es \$280.254 -- \$292.439 COP (aprox. USD 67--70). Cualquiera de los dos números es válido dependiendo de si la vasija ya está resuelta; lo que no es consistente es que la fila de contingencia y la fila de presupuesto total muestren el mismo rango, como ocurría en la versión anterior de la planilla -- eso indica una celda de la hoja de cálculo copiada en lugar de sumada.
+
+\subsection{Sobre las bombas: por qué van las dos}
+\textbf{Bomba de aire:} su función real no es evitar ``corrosión'' sino resolver dos problemas biológicos simultáneos: (1) retirar el oxígeno disuelto que las algas liberan durante la fotosíntesis, que en exceso les genera estrés oxidativo, y (2) reponer el carbono (CO$_2$) que consumen para crecer, evitando además que el pH del cultivo se desplace. Es, junto con el Peltier, uno de los dos componentes verdaderamente indispensables del sistema.
+
+\textbf{Bomba de agua:} no es indispensable por la misma razón que la de aire --no hay nada tóxico que remover-- pero cumple un papel distinto y relevante para la validez del propio modelo matemático de este documento. La ecuación de temperatura (Sección 3) trata al tanque como un solo valor escalar $T$ (un modelo de parámetros concentrados). Esa simplificación solo es físicamente correcta si el tanque está razonablemente bien mezclado; sin circulación forzada, el punto de contacto del Peltier puede quedar bastante más frío que el promedio del tanque --potencialmente por debajo de $T_{min}$ localmente-- mientras el sensor, ubicado en otro punto, sigue marcando una lectura ``segura''. La bomba de agua es, en el fondo, lo que sostiene con hardware la asunción de temperatura única que ya se usó en todas las ecuaciones anteriores. Dado su bajo costo, se recomienda incluirla.
+
+\subsection{Opciones de construcción para la camisa aislante}
+\begin{enumerate}
+    \item \textbf{Persiana de lamas giratorias:} lamas de acrílico o lámina delgada sobre un eje común, giradas por el servo entre ``abiertas'' y ``cerradas'', como una veneciana alrededor del tanque. Es la opción más fácil de calibrar con un solo servo y permite apertura proporcional (no solo binaria) si más adelante se quiere un control más fino que $s\in\{0,1\}$.
+    \item \textbf{Cortina enrollable:} una manga de manta térmica reflectante (tipo manta de emergencia) enrollada en un tambor; el servo la enrolla (abre) o la desenrolla (cierra), como una persiana enrollable.
+    \item \textbf{Funda de doble pared con compuertas:} una manga exterior fija con una cámara de aire, donde el servo solo abre o cierra rejillas de ventilación en esa cámara, controlando el flujo de aire del espacio aislante en vez de mover una cubierta completa.
+\end{enumerate}
+Para un primer prototipo se recomienda la opción 1 por su simplicidad mecánica y su compatibilidad directa con un único servomotor MG996R.
+
+\subsection{Viabilidad del proyecto}
+\begin{itemize}
+    \item \textbf{Técnica:} viable. Todos los modelos biológicos y térmicos usados (Droop, Steele, CTMI de Rosso/Bernard-Rémond, balance de Ioffe para el Peltier) están validados en literatura revisada por pares, y los componentes de actuación y sensado (ESP32, TEC1-12706, DS18B20, servomotores) son maduros, ampliamente documentados y de bajo costo -- no se requiere fabricar ni diseñar ningún componente exótico.
+    \item \textbf{Económica:} viable, y más ajustado de lo previsto originalmente. El presupuesto total actualizado (\$383.754-\$400.439 COP, aprox. USD 91-95) es bajo para un prototipo funcional completo, consistente con el alcance de un proyecto académico de pregrado. El componente individual de mayor costo es, con amplio margen, el módulo de pH PH-4502C + electrodo E201 (\$112.999 COP), que por sí solo representa cerca del 46\% del subtotal de ítems por comprar -- vale la pena que el equipo confirme si ese sensor es estrictamente necesario para el reto de regulación térmica asignado (PBR-02), o si puede diferirse a una fase posterior del proyecto sin comprometer el entregable del Reto 3.
+    \item \textbf{Pendiente de validar antes de comprar:} el balance de carga térmica completo --ganancia de calor solar más metabólica del cultivo, contra la capacidad nominal del Peltier ($Q_{cmax}\approx 58$-$60$W para el TEC1-12706)-- todavía no se ha calculado para el volumen real del tanque en las condiciones de Santa Marta. Si el volumen es grande, una sola celda TEC1-12706 podría no ser suficiente y habría que considerar múltiples celdas en paralelo o un modelo de mayor capacidad (TEC1-12715). Esta cuenta debe hacerse \textbf{antes} de comprar el Peltier definitivo.
+    \item \textbf{Riesgo operativo:} el sellado e impermeabilización de la electrónica es crítico en el clima húmedo costero de Santa Marta; se recomienda una caja IP65 o similar para el ESP32, el driver y las conexiones de potencia.
+    \item \textbf{Riesgo de cronograma:} dado el plazo típico de un proyecto de curso (semanas, no meses), conviene ordenar los componentes cuanto antes -- los tiempos de envío nacional en Colombia son de 1 a 5 días hábiles desde Bogotá, pero conviene no dejar la compra para la última semana.
+\end{itemize}
+
+\section*{Referencias}
+\begin{itemize}
+\item Droop, M.R. (1968). Vitamin B$_{12}$ and marine ecology IV: the kinetics of uptake, growth and inhibition in \textit{Monochrysis lutheri}. \textit{Journal of the Marine Biological Association of the UK}, 48(3), 689--733.
+\item Steele, J.H. (1962). Environmental control of photosynthesis in the sea. \textit{Limnology and Oceanography}, 7(2), 137--150.
+\item Rosso, L., Lobry, J.R., \& Flandrois, J.P. (1993). An unexpected correlation between cardinal temperatures of microbial growth highlighted by a new model. \textit{Journal of Theoretical Biology}, 162(4), 447--463.
+\item Bernard, O., \& Rémond, B. (2012). Validation of a simple model accounting for light and temperature effect on microalgal growth. \textit{Bioresource Technology}, 123, 520--527.
+\item Goldstein, G., Meinzer, F., \& Monasterio, M. (1984). The role of capacitance in the water balance of Andean giant rosette species. \textit{Plant, Cell \& Environment}, 7(3), 179--186.
+\item Meinzer, F.C., \& Goldstein, G. (1985). Some consequences of leaf pubescence in the Andean giant rosette plant \textit{Espeletia timotensis}. \textit{Ecology}, 66(2), 512--520.
+\item Cárdenas, M.F., Tobón, C., Rock, B.N., \& del Valle, J.I. (2018). Ecophysiology of frailejones (\textit{Espeletia} spp.), and its contribution to the hydrological functioning of páramo ecosystems. \textit{Plant Ecology}, 219(2), 185--198.
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Tabla de Conexiones - ALUNA PBR-02</title>
+<style>
+  @page {
+    size: letter portrait;
+    margin: 1.5cm;
+  }
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.5;
+    font-size: 11pt;
+    margin: 0;
+    padding: 0;
+  }
+  .header {
+    border-bottom: 3px solid #0f766e;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .header h1 {
+    color: #0f766e;
+    margin: 0;
+    font-size: 22pt;
+    font-weight: 800;
+  }
+  .header p {
+    margin: 4px 0 0 0;
+    color: #64748b;
+    font-size: 11pt;
+  }
+  .badge {
+    background: #0f766e;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 9pt;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  .section-title {
+    color: #0f766e;
+    font-size: 13pt;
+    font-weight: bold;
+    border-left: 4px solid #0f766e;
+    padding-left: 8px;
+    margin-top: 18px;
+    margin-bottom: 10px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 9.5pt;
+  }
+  th {
+    background-color: #0f766e;
+    color: white;
+    text-align: left;
+    padding: 8px 10px;
+    font-weight: 600;
+  }
+  td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  .pin-tag {
+    display: inline-block;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-family: monospace;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #bae6fd;
+  }
+  .alert-box {
+    background-color: #fef2f2;
+    border-left: 4px solid #ef4444;
+    padding: 10px 14px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    font-size: 9.5pt;
+  }
+  .alert-box strong {
+    color: #b91c1c;
+  }
+  .note-box {
+    background-color: #f0fdf4;
+    border-left: 4px solid #22c55e;
+    padding: 10px 14px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    font-size: 9.5pt;
+  }
+  .note-box strong {
+    color: #15803d;
+  }
+  .footer {
+    margin-top: 25px;
+    border-top: 1px solid #cbd5e1;
+    padding-top: 8px;
+    font-size: 8.5pt;
+    color: #94a3b8;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>ALUNA PBR-02</h1>
+    <p>Manual Oficial y Tabla Maestra de Conexiones de Hardware</p>
+  </div>
+  <div>
+    <span class="badge">ESP32 38-Pines &bull; Doble Sensor</span>
+  </div>
+</div>
+
+<div class="alert-box">
+  <strong>IMPORTANTE - TIERRA COMÚN:</strong> El pin GND de la ESP32 <u>debe</u> conectarse físicamente con el pin GND de señal del módulo MOSFET. Sin esta referencia común, el microcontrolador no podrá enviar la señal PWM y la celda Peltier no encenderá.
+</div>
+
+<div class="section-title">1. Conexión de Sensores de Temperatura (DS18B20)</div>
+<p style="font-size: 9.5pt; margin-top: 0;">Cada sensor tiene su propio canal independiente con resistencias pull-up internas activadas en el firmware.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Sensor</th>
+      <th>Cable / Color</th>
+      <th>Pin en ESP32</th>
+      <th>Ubicación en Placa</th>
+      <th>Función y Notas</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="3"><strong>Sensor 1<br>(Agua / Reactor)</strong></td>
+      <td><span style="color:#dc2626; font-weight:bold;">Rojo</span> (VCC)</td>
+      <td><span class="pin-tag">3V3</span></td>
+      <td>Fila Inferior, Pin 1 (Izquierda)</td>
+      <td>Alimentación 3.3V</td>
+    </tr>
+    <tr>
+      <td><span style="color:#1e293b; font-weight:bold;">Negro</span> (GND)</td>
+      <td><span class="pin-tag">GND</span></td>
+      <td>Fila Inferior, Pin 2</td>
+      <td>Retorno de tierra común</td>
+    </tr>
+    <tr>
+      <td><span style="color:#d97706; font-weight:bold;">Amarillo</span> (Datos)</td>
+      <td><span class="pin-tag">D15</span></td>
+      <td>Fila Inferior, Pin 3</td>
+      <td>Bus de datos 1-Wire (Pull-up a 3V3 con 4.7kΩ)</td>
+    </tr>
+    <tr>
+      <td rowspan="3"><strong>Sensor 2<br>(Ambiente / Disipador)</strong></td>
+      <td><span style="color:#dc2626; font-weight:bold;">Rojo</span> (VCC)</td>
+      <td><span class="pin-tag">3V3</span></td>
+      <td>Fila Inferior, Pin 1 (junto al Sensor 1)</td>
+      <td>Alimentación 3.3V compartida</td>
+    </tr>
+    <tr>
+      <td><span style="color:#1e293b; font-weight:bold;">Negro</span> (GND)</td>
+      <td><span class="pin-tag">GND</span></td>
+      <td>Fila Inferior, Pin 2 (junto al Sensor 1)</td>
+      <td>Tierra compartida</td>
+    </tr>
+    <tr>
+      <td><span style="color:#d97706; font-weight:bold;">Amarillo</span> (Datos)</td>
+      <td><span class="pin-tag">D13</span></td>
+      <td>Fila Superior, Pin 3</td>
+      <td>Bus de datos 2do canal (Pull-up interno activado)</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="section-title">2. Conexión de Actuadores y Potencia (MOSFET D4184 & Peltier)</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Dispositivo</th>
+      <th>Terminal / Pin</th>
+      <th>Conexión Destino</th>
+      <th>Detalle / Función</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="2"><strong>MOSFET (Control)</strong><br>Pines delgados</td>
+      <td><span class="pin-tag">PWM</span> / <span class="pin-tag">TRIG</span></td>
+      <td>ESP32 <span class="pin-tag">D25</span></td>
+      <td>Fila Superior, Pin 8 (Señal PWM 1 kHz, 8 bits)</td>
+    </tr>
+    <tr>
+      <td><span class="pin-tag">GND</span></td>
+      <td>ESP32 <span class="pin-tag">GND</span></td>
+      <td>Fila Superior, Pin 2 (Referencia obligatoria)</td>
+    </tr>
+    <tr>
+      <td rowspan="2"><strong>MOSFET (Entrada 12V)</strong><br>Bornera gruesa</td>
+      <td><span class="pin-tag">VIN +</span></td>
+      <td>Fuente 12V (+)</td>
+      <td>Positivo principal de la fuente de poder</td>
+    </tr>
+    <tr>
+      <td><span class="pin-tag">VIN -</span></td>
+      <td>Fuente 12V (-)</td>
+      <td>Negativo / Masa de la fuente de poder</td>
+    </tr>
+    <tr>
+      <td rowspan="2"><strong>Peltier TEC1-12706</strong><br>Salida del MOSFET</td>
+      <td><span class="pin-tag">OUT +</span></td>
+      <td>Cable Rojo (+)</td>
+      <td>Alimentación positiva de la celda</td>
+    </tr>
+    <tr>
+      <td><span class="pin-tag">OUT -</span></td>
+      <td>Cable Negro (-)</td>
+      <td>Conmutación por tierra (PWM modulado)</td>
+    </tr>
+    <tr>
+      <td rowspan="2"><strong>Ventilador Disipador</strong><br>Conector 3 pines</td>
+      <td>Pin 2 (Centro)</td>
+      <td>Fuente 12V (+)</td>
+      <td>Alimentación constante 100% de enfriamiento</td>
+    </tr>
+    <tr>
+      <td>Pin 1 (Masa)</td>
+      <td>Fuente 12V (-)</td>
+      <td>Retorno de masa directa</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="note-box">
+  <strong>TIPS DE MONTAJE FÍSICO:</strong>
+  <ul>
+    <li><strong>Inversión de Efecto:</strong> Si el tanque se calienta en lugar de enfriar, simplemente intercambia los cables en <code>OUT+</code> y <code>OUT-</code> del módulo MOSFET.</li>
+    <li><strong>Pasta Térmica:</strong> Aplica una capa milimétrica uniforme en ambas caras del Peltier. El ventilador debe estar siempre encendido al 100% para evitar que la cara caliente dañe la celda.</li>
+  </ul>
+</div>
+
+<div class="footer">
+  Proyecto ALUNA PBR-02 &bull; Sistema de Control Térmico y Sintonización PI &bull; Generado automáticamente
+</div>
+
+</body>
+</html>
