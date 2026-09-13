@@ -30,14 +30,16 @@ FIRMWARE_DIR = "/home/jhon/Documentos/Control2/plataforma_iot/esp32_firmware"
 recorded_data = {
     "time": [],
     "pwm": [],
-    "temp1": [],        # Sensor 1: Agua (Reactor)
-    "temp2": [],        # Sensor 2: Ambiente (Disipador)
+    "temp1": [],        # Sensor 1: Agua / Reactor (DS18B20)
+    "temp2": [],        # Sensor 2: Ambiente / Aire (DHT22)
+    "humidity": [],     # Humedad Relativa Ambiente (DHT22)
     "servo_angle": []   # Ángulo Cortina Escudo Orbital (0° a 180°)
 }
 
 latest_readings = {
     "temp1": None,
     "temp2": None,
+    "humidity": None,
     "pwm": 0,
     "servo_angle": 0,
     "time": 0.0,
@@ -82,17 +84,20 @@ def read_serial():
                                 t1 = float(parts[2])
                                 t2 = float(parts[3]) if len(parts) >= 4 else -127.0
                                 angle = float(parts[4]) if len(parts) >= 5 else control_config["current_servo"]
+                                hum = float(parts[5]) if len(parts) >= 6 else (latest_readings.get("humidity") or 0.0)
 
                                 latest_readings["time"] = t
                                 latest_readings["pwm"] = p
                                 latest_readings["temp1"] = t1
                                 latest_readings["temp2"] = t2
+                                latest_readings["humidity"] = hum
                                 latest_readings["servo_angle"] = angle
 
                                 recorded_data["time"].append(t)
                                 recorded_data["pwm"].append(p)
                                 recorded_data["temp1"].append(t1)
                                 recorded_data["temp2"].append(t2)
+                                recorded_data["humidity"].append(hum)
                                 recorded_data["servo_angle"].append(angle)
 
                                 if control_config["mode"] == "pi_auto" and t1 > -50 and t1 < 80:

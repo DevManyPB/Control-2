@@ -1,26 +1,34 @@
+#include <Arduino.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <DHT.h>
 #include <ESP32Servo.h>
 #include "driver/gpio.h"
 
 // ==========================================
 // ASIGNACIÓN DE PINES HARDWARE (ESP32)
-// ALUNA PBR-02 (Control Térmico Monocanal)
-// Soporta sensor único conectado a D15 o D13
+// ALUNA PBR-02 (Arquitectura Híbrida DS18B20 + DHT22)
 // ==========================================
-const int PIN_SENSOR_D15  = 15;     // D15 (Canal Principal de Temperatura)
-const int PIN_SENSOR_D13  = 13;     // D13 (Canal Alternativo / Fallback)
-const int PELTIER_PWM_PIN = 25;     // D25 (Control PWM MOSFET Celda Peltier)
-const int SERVO_PIN       = 27;     // D27 (Servomotor MG996R Escudo Orbital)
+const int PIN_SENSOR_AGUA_15 = 15; // D15: Sensor de Agua / Reactor (DS18B20)
+const int PIN_SENSOR_AGUA_32 = 32; // D32: Canal alternativo de Agua
+const int PIN_DHT_4          = 4;  // D4: Sensor Ambiente DHT22 (Data)
+const int PIN_DHT_13         = 13; // D13: Canal alternativo DHT22
+const int PELTIER_PWM_PIN    = 25; // D25: Control PWM MOSFET Celda Peltier
+const int SERVO_PIN          = 27; // D27: Servomotor MG996R Escudo Orbital
+
+#define DHTTYPE DHT22
 
 // ==========================================
 // INSTANCIAS DE HARDWARE
 // ==========================================
-OneWire oneWire15(PIN_SENSOR_D15);
-DallasTemperature sensor15(&oneWire15);
+OneWire oneWireAgua15(PIN_SENSOR_AGUA_15);
+DallasTemperature sensorAgua15(&oneWireAgua15);
 
-OneWire oneWire13(PIN_SENSOR_D13);
-DallasTemperature sensor13(&oneWire13);
+OneWire oneWireAgua32(PIN_SENSOR_AGUA_32);
+DallasTemperature sensorAgua32(&oneWireAgua32);
+
+DHT dht4(PIN_DHT_4, DHTTYPE);
+DHT dht13(PIN_DHT_13, DHTTYPE);
 
 Servo servoCortina;
 
@@ -37,31 +45,37 @@ void setup() {
   Serial.begin(115200);
   delay(500);
   
-  // Activar resistencias pull-up internas
-  pinMode(PIN_SENSOR_D15, INPUT_PULLUP);
-  pinMode(PIN_SENSOR_D13, INPUT_PULLUP);
-  gpio_pullup_en((gpio_num_t)PIN_SENSOR_D15);
-  gpio_pullup_en((gpio_num_t)PIN_SENSOR_D13);
+  // Activar pull-ups internos para el DS18B20
+  pinMode(PIN_SENSOR_AGUA_15, INPUT_PULLUP);
+  pinMode(PIN_SENSOR_AGUA_32, INPUT_PULLUP);
+  gpio_pullup_en((gpio_num_t)PIN_SENSOR_AGUA_15);
+  gpio_pullup_en((gpio_num_t)PIN_SENSOR_AGUA_32);
 
-  sensor15.begin();
-  sensor13.begin();
-  sensor15.setWaitForConversion(true);
-  sensor13.setWaitForConversion(true);
-  sensor15.setResolution(10); // 187 ms por conversión (rápido y ultra estable)
-  sensor13.setResolution(10);
+  sensorAgua15.begin();
+  sensorAgua32.begin();
+  sensorAgua15.setWaitForConversion(true);
+  sensorAgua32.setWaitForConversion(true);
+  sensorAgua15.setResolution(10); // 187 ms por conversión (rápido y ultra estable)
+  sensorAgua32.setResolution(10);
+
+  // Inicializar sensor DHT22 en D4 y D13
+  dht4.begin();
+  dht13.begin();
   
-  // Configuración PWM Peltier (1 kHz, 8 bits: 0-255)
+  // Configuración PWM Peltier en D25 (1 kHz, 8 bits: 0-255)
   ledcAttach(PELTIER_PWM_PIN, 1000, 8);
   ledcWrite(PELTIER_PWM_PIN, 0);
 
-  // Configuración Servomotor MG996R (50 Hz estándar)
+  // Configuración Servomotor MG996R en D27 (50 Hz estándar)
   servoCortina.setPeriodHertz(50);
   servoCortina.attach(SERVO_PIN, 500, 2500);
   servoCortina.write(0); // 0° = Escudo Abierto (Fotosíntesis)
 
   Serial.println("==================================================");
-  Serial.println("   ALUNA PBR-02 | SISTEMA DE CONTROL TÉRMICO PI   ");
-  Serial.println("   Detección automática de sensor en D15 / D13    ");
+  Serial.println("   ALUNA PBR-02 | SISTEMA TÉRMICO HÍBRIDO         ");
+  Serial.println("   S1: DS18B20 (Agua en D15/D32)                  ");
+  Serial.println("   S2: DHT22 (Ambiente & Humedad en D4/D13)       ");
+  Serial.println("   Peltier PWM: Pin D25 | Servo Escudo: Pin D27   ");
   Serial.println("==================================================");
 }
 
@@ -74,7 +88,6 @@ void loop() {
     cmd.trim();
 
     if (cmd == "S" || cmd == "s") {
-      // Iniciar prueba escalón por defecto (60% PWM)
       is_testing = true;
       start_time = millis();
       pwm_actual = 153;
@@ -82,7 +95,6 @@ void loop() {
       Serial.println(">>> ENSAYO INICIADO: PWM = 153 (60%)");
     } 
     else if (cmd == "X" || cmd == "x") {
-      // Paro total de emergencia
       is_testing = false;
       pwm_actual = 0;
       ledcWrite(PELTIER_PWM_PIN, 0);
@@ -91,7 +103,6 @@ void loop() {
       Serial.println(">>> PARO TOTAL EJECUTADO (PWM = 0, SERVO = 0°)");
     }
     else if (cmd.startsWith("M:")) {
-      // Control directo de potencia Peltier (M:0 a M:255)
       int val = cmd.substring(2).toInt();
       pwm_actual = constrain(val, 0, 255);
       ledcWrite(PELTIER_PWM_PIN, pwm_actual);
@@ -103,7 +114,6 @@ void loop() {
       Serial.println(pwm_actual);
     }
     else if (cmd.startsWith("C:")) {
-      // Control angular del servomotor (C:0 a C:180)
       int angle = cmd.substring(2).toInt();
       servo_angle_actual = constrain(angle, 0, 180);
       servoCortina.write(servo_angle_actual);
@@ -113,37 +123,47 @@ void loop() {
   }
 
   // ==========================================
-  // TELEMETRÍA PERIÓDICA (CADA 1.5 SEGUNDOS)
+  // TELEMETRÍA PERIÓDICA (CADA 2 SEGUNDOS)
   // ==========================================
   if (is_testing) {
-    if (millis() - last_read >= 1500) {
+    if (millis() - last_read >= 2000) {
       last_read = millis();
       
-      // 1. Intentar lectura en D15
-      sensor15.requestTemperatures();
-      float temp = sensor15.getTempCByIndex(0);
-
-      // 2. Si D15 no responde, buscar en D13 automáticamente
-      if (temp == DEVICE_DISCONNECTED_C || temp <= -100.0) {
-        sensor13.requestTemperatures();
-        float temp13 = sensor13.getTempCByIndex(0);
-        if (temp13 > -100.0 && temp13 != DEVICE_DISCONNECTED_C) {
-          temp = temp13;
+      // 1. Lectura Sensor 1 (DS18B20 Agua): D15 primero, fallback a D32
+      sensorAgua15.requestTemperatures();
+      float temp_agua = sensorAgua15.getTempCByIndex(0);
+      if (temp_agua == DEVICE_DISCONNECTED_C || temp_agua <= -100.0) {
+        sensorAgua32.requestTemperatures();
+        float temp32 = sensorAgua32.getTempCByIndex(0);
+        if (temp32 > -100.0 && temp32 != DEVICE_DISCONNECTED_C) {
+          temp_agua = temp32;
         }
       }
+
+      // 2. Lectura Sensor 2 (DHT22 Ambiente): D4 primero, fallback a D13
+      float temp_aire = dht4.readTemperature();
+      float hum_aire  = dht4.readHumidity();
+      if (isnan(temp_aire) || isnan(hum_aire)) {
+        temp_aire = dht13.readTemperature();
+        hum_aire  = dht13.readHumidity();
+      }
+      if (isnan(temp_aire)) temp_aire = -127.0;
+      if (isnan(hum_aire))  hum_aire  = 0.0;
       
       float t = (millis() - start_time) / 1000.0;
       
-      // Formato CSV estándar: tiempo,pwm,temp_agua,temp_aux,angulo_servo
+      // Formato CSV estándar: tiempo,pwm,temp_agua,temp_ambiente,angulo_servo,humedad
       Serial.print(t, 2);
       Serial.print(",");
       Serial.print(pwm_actual);
       Serial.print(",");
-      Serial.print(temp, 2);
+      Serial.print(temp_agua, 2);
       Serial.print(",");
-      Serial.print(temp, 2); // Duplicado para retrocompatibilidad
+      Serial.print(temp_aire, 2);
       Serial.print(",");
-      Serial.println(servo_angle_actual);
+      Serial.print(servo_angle_actual);
+      Serial.print(",");
+      Serial.println(hum_aire, 1);
     }
   }
 }

@@ -233,13 +233,15 @@
                 </div>
             </div>
 
-            <!-- Gauge 2: Temperatura del Disipador / Ambiente -->
+            <!-- Gauge 2: Temperatura y Humedad Ambiente (DHT22) -->
             <div class="hud-card hud-card-interactive p-6 rounded-3xl relative overflow-hidden flex items-center justify-between">
                 <div>
-                    <span class="text-xs font-mono uppercase tracking-widest text-slate-400 font-semibold">T. Ambiente / Ext</span>
+                    <span class="text-xs font-mono uppercase tracking-widest text-slate-400 font-semibold">T. Ambiente / DHT22</span>
                     <div id="val-t2" class="text-4xl font-extrabold text-emerald-300 font-mono mt-2 tracking-tight">--.-<span class="text-lg text-slate-500 font-normal">°C</span></div>
                     <div class="mt-2 flex items-center gap-2">
-                        <span class="text-[11px] text-slate-400 font-mono">Disipador Caliente</span>
+                        <span id="val-humidity-pill" class="text-[11px] text-emerald-400 font-mono font-bold">Hum: --%</span>
+                        <span class="text-slate-600">&bull;</span>
+                        <span class="text-[11px] text-slate-400 font-mono">DHT22 AM2302</span>
                     </div>
                 </div>
                 <div class="relative w-20 h-20 flex items-center justify-center">
@@ -247,7 +249,7 @@
                         <circle cx="50" cy="50" r="40" stroke="#1e293b" stroke-width="8" fill="transparent"/>
                         <circle id="gauge-t2-ring" class="gauge-circle" cx="50" cy="50" r="40" stroke="#10b981" stroke-width="8" fill="transparent" stroke-dasharray="251.2" stroke-dashoffset="251.2" stroke-linecap="round"/>
                     </svg>
-                    <span class="absolute text-xs font-mono font-bold text-emerald-400">D13</span>
+                    <span class="absolute text-xs font-mono font-bold text-emerald-400">D4/13</span>
                 </div>
             </div>
 
@@ -572,27 +574,28 @@
                     </div>
                 </div>
 
-                <!-- TARJETA SENSOR 2: AMBIENTE / DISIPADOR (GPIO 13) -->
+                <!-- TARJETA SENSOR 2: AMBIENTE & HUMEDAD (DHT22 en D4 / D13) -->
                 <div class="hud-card hud-card-interactive p-8 rounded-3xl border border-emerald-500/30 relative overflow-hidden flex flex-col justify-between space-y-6 bg-gradient-to-b from-slate-900/90 to-slate-950/90">
                     <div class="flex justify-between items-start">
                         <div>
                             <div class="flex items-center gap-2.5">
                                 <span class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">SENSOR 2</span>
-                                <span class="text-xs font-mono text-slate-400">Canal 1-Wire Aire / Disipador Térmico</span>
+                                <span class="text-xs font-mono text-slate-400">Sensor Digital DHT22 (AM2302)</span>
                             </div>
-                            <h3 class="text-xl font-bold text-white mt-2 font-sans">Ambiente / Disipador Caliente</h3>
-                            <p class="text-xs text-slate-400 font-mono mt-0.5">Asignación: Pin D13 &middot; Adherido a Aletas de Aluminio</p>
+                            <h3 class="text-xl font-bold text-white mt-2 font-sans">Ambiente y Humedad Relativa</h3>
+                            <p class="text-xs text-slate-400 font-mono mt-0.5">Asignación: Pin D4 o D13 &middot; Temperatura & Humedad Ambiental</p>
                         </div>
-                        <span class="px-3 py-1 rounded-full text-xs font-mono font-extrabold bg-emerald-950 text-emerald-300 border border-emerald-700">D13 / GPIO 13</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-mono font-extrabold bg-emerald-950 text-emerald-300 border border-emerald-700">D4 / D13</span>
                     </div>
 
-                    <!-- Visualización de Temperatura y Gauge -->
+                    <!-- Visualización de Temperatura, Humedad y Gauge -->
                     <div class="flex items-center justify-between p-6 bg-black/50 rounded-2xl border border-white/5">
                         <div>
                             <span class="text-[11px] font-mono uppercase tracking-widest text-slate-400 font-semibold">Lectura Instantánea</span>
                             <div id="diag-s2-temp" class="text-5xl font-black text-emerald-300 font-mono mt-1 tracking-tight">--.-<span class="text-xl text-slate-500 font-normal">°C</span></div>
                             <div class="mt-3 flex items-center gap-2">
-                                <span id="diag-s2-status" class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-slate-800 text-slate-400 border border-white/10">Buscando Sensor...</span>
+                                <span id="diag-s2-status" class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-slate-800 text-slate-400 border border-white/10">Buscando DHT22...</span>
+                                <span id="diag-s2-hum" class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-700">Hum: --%</span>
                             </div>
                         </div>
                         <div class="relative w-24 h-24 flex items-center justify-center">
@@ -600,7 +603,7 @@
                                 <circle cx="50" cy="50" r="40" stroke="#1e293b" stroke-width="8" fill="transparent"/>
                                 <circle id="diag-s2-ring" class="gauge-circle" cx="50" cy="50" r="40" stroke="#10b981" stroke-width="8" fill="transparent" stroke-dasharray="251.2" stroke-dashoffset="251.2" stroke-linecap="round"/>
                             </svg>
-                            <span class="absolute text-sm font-mono font-bold text-emerald-400">S2</span>
+                            <span class="absolute text-sm font-mono font-bold text-emerald-400">DHT</span>
                         </div>
                     </div>
 
@@ -620,12 +623,12 @@
                         </div>
                     </div>
 
-                    <!-- Checklist de Hardware Pin D13 -->
+                    <!-- Checklist de Hardware DHT22 -->
                     <div class="p-4 bg-slate-950/80 rounded-xl border border-white/5 space-y-2 text-xs font-mono text-slate-400">
-                        <div class="text-emerald-400 font-bold uppercase tracking-wider text-[11px] mb-1">Checklist Físico Hardware:</div>
-                        <div class="flex items-center gap-2"><span>🔌</span> Línea de Datos: Pin D13 (Fila superior, pin 3)</div>
-                        <div class="flex items-center gap-2"><span>⚡</span> Pull-up Interna: Activada por software en ESP32 (INPUT_PULLUP)</div>
-                        <div class="flex items-center gap-2"><span>🛡️</span> Disipador: Debe recibir flujo de aire directo del ventilador de 12V</div>
+                        <div class="text-emerald-400 font-bold uppercase tracking-wider text-[11px] mb-1">Checklist Físico DHT22:</div>
+                        <div class="flex items-center gap-2"><span>🔌</span> Pin de Señal (Data): Conectar al Pin D4 (o D13)</div>
+                        <div class="flex items-center gap-2"><span>⚡</span> Alimentación (VCC): 3.3V o 5V (VIN)</div>
+                        <div class="flex items-center gap-2"><span>🛡️</span> Retardo de Lectura: Muestreo cada 2.0 segundos (especificación DHT22)</div>
                     </div>
                 </div>
 
@@ -1341,8 +1344,10 @@
                     document.getElementById('gauge-t2-ring').style.strokeDashoffset = 251.2 - (pctT2 / 100) * 251.2;
                 }
 
+                const lastHum = latest ? latest.humidity : null;
+
                 if (lastT1 !== null || lastT2 !== null) {
-                    updateSensorDiagnostics(lastT1, lastT2);
+                    updateSensorDiagnostics(lastT1, lastT2, lastHum);
                 }
 
                 if (t.time && t.time.length > 0) {
@@ -1587,7 +1592,7 @@
             }
         }
 
-        function updateSensorDiagnostics(t1, t2) {
+        function updateSensorDiagnostics(t1, t2, hum) {
             if (t1 !== null && t1 !== undefined) {
                 if (t1 > -50 && t1 < 100) s1History.push(t1);
                 document.getElementById('diag-s1-temp').innerHTML = `${t1.toFixed(1)}<span class="text-xl text-slate-500 font-normal">°C</span>`;
@@ -1627,13 +1632,19 @@
                 const badge2 = document.getElementById('diag-s2-status');
                 if (t2 <= -120) {
                     badge2.className = "px-3 py-1 rounded-full text-xs font-mono font-bold bg-rose-950 text-rose-300 border border-rose-700 animate-pulse";
-                    badge2.textContent = "⚠️ ERROR -127°C: Bus Desconectado";
-                } else if (Math.abs(t2 - 85.0) < 0.2) {
-                    badge2.className = "px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-950 text-amber-300 border border-amber-700 animate-pulse";
-                    badge2.textContent = "⚠️ AVISO 85°C: Fallo de Conversión";
+                    badge2.textContent = "⚠️ ERROR: DHT22 Desconectado";
                 } else {
                     badge2.className = "px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-700";
-                    badge2.textContent = "🟢 Operativo (Lectura Válida)";
+                    badge2.textContent = "🟢 DHT22 Operativo";
+                }
+
+                const humEl = document.getElementById('diag-s2-hum');
+                if (humEl && hum !== null && hum !== undefined && hum > 0) {
+                    humEl.textContent = `Hum: ${hum.toFixed(1)}%`;
+                }
+                const humPill = document.getElementById('val-humidity-pill');
+                if (humPill && hum !== null && hum !== undefined && hum > 0) {
+                    humPill.textContent = `Hum: ${hum.toFixed(1)}%`;
                 }
 
                 if (s2History.length > 0) {
