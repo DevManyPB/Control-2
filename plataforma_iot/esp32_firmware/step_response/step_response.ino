@@ -6,20 +6,16 @@
 // ASIGNACIÓN DE PINES HARDWARE - ALUNA PBR-02
 // Ensayo de Respuesta al Escalón (FOPDT Dual)
 // ========================================================
-const int PIN_SENSOR_AGUA_14 = 14; // D14 (Canal primario Agua DS18B20)
-const int PIN_SENSOR_AGUA_15 = 15; // D15 (Canal alternativo Agua)
-const int PIN_SENSOR_AGUA_32 = 32; // D32 (Canal alternativo Agua)
+const int PIN_SENSOR_AGUA_15 = 15; // D15 (Canal primario Agua DS18B20)
+const int PIN_SENSOR_AGUA_14 = 14; // D14 (Canal alternativo)
 const int PIN_SENSOR_AIRE_13 = 13; // D13 (Canal Ambiente / Disipador)
 const int PELTIER_PWM_PIN    = 25; // D25 (Control MOSFET Peltier)
-
-OneWire oneWireAgua14(PIN_SENSOR_AGUA_14);
-DallasTemperature sensorAgua14(&oneWireAgua14);
 
 OneWire oneWireAgua15(PIN_SENSOR_AGUA_15);
 DallasTemperature sensorAgua15(&oneWireAgua15);
 
-OneWire oneWireAgua32(PIN_SENSOR_AGUA_32);
-DallasTemperature sensorAgua32(&oneWireAgua32);
+OneWire oneWireAgua14(PIN_SENSOR_AGUA_14);
+DallasTemperature sensorAgua14(&oneWireAgua14);
 
 OneWire oneWireAire13(PIN_SENSOR_AIRE_13);
 DallasTemperature sensorAire13(&oneWireAire13);
@@ -30,46 +26,36 @@ bool prueba_iniciada = false;
 
 unsigned long tiempo_inicio = 0;
 unsigned long tiempo_anterior = 0;
-const unsigned long INTERVALO_MUESTREO = 1000; // 1 muestra por segundo
+const unsigned long INTERVALO_MUESTREO = 1000;
 
 void setup() {
   Serial.begin(115200);
   delay(500);
   
-  // Activar resistencias pull-up internas
-  pinMode(PIN_SENSOR_AGUA_14, INPUT_PULLUP);
   pinMode(PIN_SENSOR_AGUA_15, INPUT_PULLUP);
-  pinMode(PIN_SENSOR_AGUA_32, INPUT_PULLUP);
+  pinMode(PIN_SENSOR_AGUA_14, INPUT_PULLUP);
   pinMode(PIN_SENSOR_AIRE_13, INPUT_PULLUP);
-  gpio_pullup_en((gpio_num_t)PIN_SENSOR_AGUA_14);
   gpio_pullup_en((gpio_num_t)PIN_SENSOR_AGUA_15);
-  gpio_pullup_en((gpio_num_t)PIN_SENSOR_AGUA_32);
+  gpio_pullup_en((gpio_num_t)PIN_SENSOR_AGUA_14);
   gpio_pullup_en((gpio_num_t)PIN_SENSOR_AIRE_13);
 
-  sensorAgua14.begin();
   sensorAgua15.begin();
-  sensorAgua32.begin();
+  sensorAgua14.begin();
   sensorAire13.begin();
-  sensorAgua14.setWaitForConversion(true);
   sensorAgua15.setWaitForConversion(true);
-  sensorAgua32.setWaitForConversion(true);
+  sensorAgua14.setWaitForConversion(true);
   sensorAire13.setWaitForConversion(true);
-  sensorAgua14.setResolution(10); // 187 ms por conversión
   sensorAgua15.setResolution(10);
-  sensorAgua32.setResolution(10);
+  sensorAgua14.setResolution(10);
   sensorAire13.setResolution(10);
 
-  // Configuración PWM ESP32
   ledcAttach(PELTIER_PWM_PIN, 1000, 8);
   ledcWrite(PELTIER_PWM_PIN, 0);
 
   Serial.println("==================================================");
-  Serial.println("   ALUNA PBR-02 | ENSAYO DE RESPUESTA AL ESCALON  ");
-  Serial.println("   S1 (Agua): D14/D15/D32 | S2 (Aire): D13 | PWM: D25");
+  Serial.println("   ALUNA PBR-02 | ENSAYO ESCALON D15 & D13        ");
+  Serial.println("   S1 (Agua): D15 | S2 (Aire): D13 | PWM: D25     ");
   Serial.println("==================================================");
-  Serial.println("Comando 'S' -> Aplicar escalón (PWM = 153 / 60%)");
-  Serial.println("Comando 'X' -> Detener ensayo y apagar Peltier");
-  Serial.println("--------------------------------------------------");
 }
 
 void loop() {
@@ -96,34 +82,22 @@ void loop() {
     if (ahora - tiempo_anterior >= INTERVALO_MUESTREO) {
       tiempo_anterior = ahora;
 
-      // Lectura Sensor 1 (Agua): D14 primero, fallback D15, fallback D32
-      sensorAgua14.requestTemperatures();
-      float t1 = sensorAgua14.getTempCByIndex(0);
+      sensorAgua15.requestTemperatures();
+      float t1 = sensorAgua15.getTempCByIndex(0);
       if (t1 == DEVICE_DISCONNECTED_C || t1 <= -100.0) {
-        sensorAgua15.requestTemperatures();
-        float t15 = sensorAgua15.getTempCByIndex(0);
-        if (t15 > -100.0 && t15 != DEVICE_DISCONNECTED_C) {
-          t1 = t15;
-        } else {
-          sensorAgua32.requestTemperatures();
-          float t32 = sensorAgua32.getTempCByIndex(0);
-          if (t32 > -100.0 && t32 != DEVICE_DISCONNECTED_C) {
-            t1 = t32;
-          }
-        }
+        sensorAgua14.requestTemperatures();
+        float t14 = sensorAgua14.getTempCByIndex(0);
+        if (t14 > -100.0 && t14 != DEVICE_DISCONNECTED_C) t1 = t14;
       }
 
-      // Lectura Sensor 2 (Ambiente)
       sensorAire13.requestTemperatures();
       float t2 = sensorAire13.getTempCByIndex(0);
-      if (sensorAgua14.getDeviceCount() >= 2 && (t2 == DEVICE_DISCONNECTED_C || t2 <= -100.0)) {
-        t2 = sensorAgua14.getTempCByIndex(1);
+      if (sensorAgua15.getDeviceCount() >= 2 && (t2 == DEVICE_DISCONNECTED_C || t2 <= -100.0)) {
+        t2 = sensorAgua15.getTempCByIndex(1);
       }
 
       float t_seg = (ahora - tiempo_inicio) / 1000.0;
 
-      // Telemetría CSV estándar compatible con la plataforma web:
-      // tiempo,pwm,temp_agua,temp_ambiente,servo
       Serial.print(t_seg, 1);
       Serial.print(",");
       Serial.print(pwm_actual);

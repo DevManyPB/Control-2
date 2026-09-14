@@ -229,7 +229,7 @@
                         <circle cx="50" cy="50" r="40" stroke="#1e293b" stroke-width="8" fill="transparent"/>
                         <circle id="gauge-t1-ring" class="gauge-circle" cx="50" cy="50" r="40" stroke="#00f2fe" stroke-width="8" fill="transparent" stroke-dasharray="251.2" stroke-dashoffset="251.2" stroke-linecap="round"/>
                     </svg>
-                    <span class="absolute text-xs font-mono font-bold text-teal-400">D14</span>
+                    <span class="absolute text-xs font-mono font-bold text-teal-400">D15</span>
                 </div>
             </div>
 
@@ -497,16 +497,16 @@
                     </div>
                     <div>
                         <h2 class="text-lg font-bold text-white font-sans">Banco de Diagnóstico de Sensores Térmicos</h2>
-                        <p class="text-xs text-slate-400 font-mono">Arquitectura Híbrida: DS18B20 1-Wire (GPIO 14) + DHT22 AM2302 (GPIO 4)</p>
+                        <p class="text-xs text-slate-400 font-mono">Buses Independientes: Sensor 1 en D15 (GPIO 15) &middot; Sensor 2 en D13 (GPIO 13)</p>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-3">
                     <button id="btn-test-s1" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-teal-300 border border-teal-500/30 hover:border-teal-400 text-xs font-mono font-bold rounded-xl transition flex items-center gap-2 cursor-pointer shadow-md">
-                        <span>🧪</span> AISLAR SENSOR 1 (D14)
+                        <span>🧪</span> AISLAR SENSOR 1 (D15)
                     </button>
                     <button id="btn-test-s2" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-emerald-300 border border-emerald-500/30 hover:border-emerald-400 text-xs font-mono font-bold rounded-xl transition flex items-center gap-2 cursor-pointer shadow-md">
-                        <span>🧪</span> AISLAR SENSOR 2 (DHT22 D4)
+                        <span>🧪</span> AISLAR SENSOR 2 (D13)
                     </button>
                     <button id="btn-test-both" class="px-4 py-2 bg-cyan-600/90 hover:bg-cyan-500 text-slate-950 text-xs font-mono font-extrabold rounded-xl transition flex items-center gap-2 cursor-pointer shadow-md">
                         <span>🔄</span> AMBOS SENSORES
@@ -517,7 +517,7 @@
             <!-- Fila de Tarjetas de Sensores Independientes -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
-                <!-- TARJETA SENSOR 1: AGUA / REACTOR (GPIO 14) -->
+                <!-- TARJETA SENSOR 1: AGUA / REACTOR (GPIO 15) -->
                 <div class="hud-card hud-card-interactive p-8 rounded-3xl border border-teal-500/30 relative overflow-hidden flex flex-col justify-between space-y-6 bg-gradient-to-b from-slate-900/90 to-slate-950/90">
                     <div class="flex justify-between items-start">
                         <div>
@@ -526,9 +526,9 @@
                                 <span class="text-xs font-mono text-slate-400">Canal 1-Wire Agua / Medio Líquido</span>
                             </div>
                             <h3 class="text-xl font-bold text-white mt-2 font-sans">Reactor Biológico (Agua)</h3>
-                            <p class="text-xs text-slate-400 font-mono mt-0.5">Asignación: Pin D14 &middot; Termopozo en Botella</p>
+                            <p class="text-xs text-slate-400 font-mono mt-0.5">Asignación: Pin D15 &middot; Termopozo en Botella</p>
                         </div>
-                        <span class="px-3 py-1 rounded-full text-xs font-mono font-extrabold bg-teal-950 text-teal-300 border border-teal-700">D14 / GPIO 14</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-mono font-extrabold bg-teal-950 text-teal-300 border border-teal-700">D15 / GPIO 15</span>
                     </div>
 
                     <!-- Visualización de Temperatura y Gauge -->
@@ -565,10 +565,10 @@
                         </div>
                     </div>
 
-                    <!-- Checklist de Hardware Pin D14 -->
+                    <!-- Checklist de Hardware Pin D15 -->
                     <div class="p-4 bg-slate-950/80 rounded-xl border border-white/5 space-y-2 text-xs font-mono text-slate-400">
                         <div class="text-teal-400 font-bold uppercase tracking-wider text-[11px] mb-1">Checklist Físico Hardware:</div>
-                        <div class="flex items-center gap-2"><span>🔌</span> Línea de Datos: Pin D14 (GPIO 14, Fila superior pin 6)</div>
+                        <div class="flex items-center gap-2"><span>🔌</span> Línea de Datos: Pin D15 (GPIO 15, Fila inferior pin 3)</div>
                         <div class="flex items-center gap-2"><span>⚡</span> Pull-up Externa: Resistencia 4.7 kΩ entre Amarillo (Datos) y 3.3V (Rojo)</div>
                         <div class="flex items-center gap-2"><span>🛡️</span> Detección de Falla: Si marca -127°C, revisar cable de datos o masa GND</div>
                     </div>
@@ -662,10 +662,10 @@
             <div class="hud-card p-7 rounded-3xl border border-white/10">
                 <div class="flex justify-between items-center mb-4">
                     <div>
-                        <span class="text-xs font-mono uppercase tracking-widest text-teal-400 font-bold">Dinámica Térmica Híbrida</span>
-                        <h3 class="text-base font-bold text-white font-sans">Registro de Alta Frecuencia: Sensor 1 (D14 Agua) vs Sensor 2 (D4 DHT22)</h3>
+                        <span class="text-xs font-mono uppercase tracking-widest text-teal-400 font-bold">Dinámica Térmica Dual</span>
+                        <h3 class="text-base font-bold text-white font-sans">Registro de Alta Frecuencia: Sensor 1 (D15 Agua) vs Sensor 2 (D13 Ambiente)</h3>
                     </div>
-                    <span class="text-xs font-mono text-slate-400">DS18B20 1-Wire &middot; DHT22 AM2302</span>
+                    <span class="text-xs font-mono text-slate-400">Canales Independientes GPIO 15 &bull; GPIO 13</span>
                 </div>
                 <div id="echart-sensors" class="w-full h-80"></div>
             </div>
@@ -845,15 +845,15 @@
                             <tbody class="divide-y divide-white/5">
                                 <tr>
                                     <td class="p-3 font-bold text-teal-300">Sensor 1 (Agua)</td>
-                                    <td class="p-3 text-cyan-300 font-bold">D14</td>
-                                    <td class="p-3">Fila Superior, Pin 6 (GPIO 14)</td>
+                                    <td class="p-3 text-cyan-300 font-bold">D15</td>
+                                    <td class="p-3">Fila Inferior, Pin 3 (GPIO 15)</td>
                                     <td class="p-3">DS18B20 1-Wire (Pull-up 4.7k a 3V3)</td>
                                 </tr>
                                 <tr>
                                     <td class="p-3 font-bold text-emerald-300">Sensor 2 (Ambiente)</td>
-                                    <td class="p-3 text-cyan-300 font-bold">D4</td>
-                                    <td class="p-3">Fila Inferior, Pin 7 (GPIO 4)</td>
-                                    <td class="p-3">DHT22 AM2302 (Temp + Humedad)</td>
+                                    <td class="p-3 text-cyan-300 font-bold">D13</td>
+                                    <td class="p-3">Fila Superior, Pin 3 (GPIO 13)</td>
+                                    <td class="p-3">DS18B20 / DHT22 (Temp & Humedad)</td>
                                 </tr>
                                 <tr>
                                     <td class="p-3 font-bold text-yellow-300">MOSFET (Peltier)</td>
@@ -1387,8 +1387,8 @@
                         chartSensors.setOption({
                             xAxis: { data: timeLabels },
                             series: [
-                                { name: 'Sensor 1: Agua (D14)', data: t.temp1 },
-                                { name: 'Sensor 2: DHT22 (D4)', data: t.temp2 }
+                                { name: 'Sensor 1: Agua (D15)', data: t.temp1 },
+                                { name: 'Sensor 2: Ambiente (D13)', data: t.temp2 }
                             ]
                         });
                     }
@@ -1548,7 +1548,7 @@
                     textStyle: { color: '#f8fafc', fontFamily: 'JetBrains Mono', fontSize: 11 }
                 },
                 legend: {
-                    data: ['Sensor 1: Agua (D14)', 'Sensor 2: DHT22 (D4)'],
+                    data: ['Sensor 1: Agua (D15)', 'Sensor 2: Ambiente (D13)'],
                     textStyle: { color: '#94a3b8', fontFamily: 'Space Grotesk' },
                     top: 0, right: 10
                 },
@@ -1568,7 +1568,7 @@
                 },
                 series: [
                     {
-                        name: 'Sensor 1: Agua (D14)',
+                        name: 'Sensor 1: Agua (D15)',
                         type: 'line',
                         smooth: true,
                         data: [],
@@ -1576,7 +1576,7 @@
                         lineStyle: { width: 3, shadowColor: 'rgba(0, 242, 254, 0.4)', shadowBlur: 10 }
                     },
                     {
-                        name: 'Sensor 2: DHT22 (D4)',
+                        name: 'Sensor 2: Ambiente (D13)',
                         type: 'line',
                         smooth: true,
                         data: [],
@@ -1677,11 +1677,11 @@
 
         // Botones de Comando Serial Rápido para Sensores
         document.getElementById('btn-test-s1').addEventListener('click', async () => {
-            showToast("Modo Sensor 1", "Monitoreando exclusivamente el bus D14 (Agua)", "🧪");
+            showToast("Modo Sensor 1", "Monitoreando exclusivamente el bus D15 (Agua)", "🧪");
             try { await fetch(`${BACKEND_URL}/api/send_cmd`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({cmd: '1'}) }); } catch(e){}
         });
         document.getElementById('btn-test-s2').addEventListener('click', async () => {
-            showToast("Modo Sensor 2", "Monitoreando exclusivamente el DHT22 D4 (Ambiente)", "🧪");
+            showToast("Modo Sensor 2", "Monitoreando exclusivamente el canal D13 (Ambiente)", "🧪");
             try { await fetch(`${BACKEND_URL}/api/send_cmd`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({cmd: '2'}) }); } catch(e){}
         });
         document.getElementById('btn-test-both').addEventListener('click', async () => {
