@@ -6,16 +6,20 @@
 
 // ========================================================
 // ALUNA PBR-02 | BANCO DE PRUEBAS DE SENSORES HÍBRIDOS
-// Sensor 1: DS18B20 (Agua / Reactor en D15 o D32)
-// Sensor 2: DHT22 (Ambiente & Humedad en D4 o D13)
+// Sensor 1: DS18B20 (Agua / Reactor en D14, fallback D15/D32)
+// Sensor 2: DHT22 (Ambiente & Humedad en D4, fallback D13)
 // ========================================================
 
-const int PIN_DS18B20_15 = 15; // D15: Sensor de Agua (DS18B20)
+const int PIN_DS18B20_14 = 14; // D14: Sensor de Agua (DS18B20) [CANAL PRINCIPAL]
+const int PIN_DS18B20_15 = 15; // D15: Alternativo Agua (DS18B20)
 const int PIN_DS18B20_32 = 32; // D32: Alternativo Agua (DS18B20)
-const int PIN_DHT_4      = 4;  // D4: Sensor Ambiente (DHT22)
+const int PIN_DHT_4      = 4;  // D4: Sensor Ambiente (DHT22) [CANAL PRINCIPAL]
 const int PIN_DHT_13     = 13; // D13: Alternativo DHT22
 
 #define DHTTYPE DHT22
+
+OneWire bus14(PIN_DS18B20_14);
+DallasTemperature sensorAgua14(&bus14);
 
 OneWire bus15(PIN_DS18B20_15);
 DallasTemperature sensorAgua15(&bus15);
@@ -36,20 +40,25 @@ void setup() {
 
   Serial.println("\n==================================================");
   Serial.println("   ALUNA PBR-02 | BANCO DE PRUEBAS HÍBRIDO        ");
-  Serial.println("   Sensor 1: DS18B20 (Agua / Reactor D15/D32)     ");
+  Serial.println("   Sensor 1: DS18B20 (Agua / Reactor D14/D15/D32) ");
   Serial.println("   Sensor 2: DHT22 (Ambiente / Humedad D4/D13)    ");
   Serial.println("==================================================");
 
   // Pull-up para DS18B20
+  pinMode(PIN_DS18B20_14, INPUT_PULLUP);
   pinMode(PIN_DS18B20_15, INPUT_PULLUP);
   pinMode(PIN_DS18B20_32, INPUT_PULLUP);
+  gpio_pullup_en((gpio_num_t)PIN_DS18B20_14);
   gpio_pullup_en((gpio_num_t)PIN_DS18B20_15);
   gpio_pullup_en((gpio_num_t)PIN_DS18B20_32);
 
+  sensorAgua14.begin();
   sensorAgua15.begin();
   sensorAgua32.begin();
+  sensorAgua14.setResolution(10);
   sensorAgua15.setResolution(10);
   sensorAgua32.setResolution(10);
+  sensorAgua14.setWaitForConversion(true);
   sensorAgua15.setWaitForConversion(true);
   sensorAgua32.setWaitForConversion(true);
 
@@ -87,20 +96,26 @@ void loop() {
     float temp_aire = -127.0;
     float hum_aire  = 0.0;
 
-    // 1. Lectura DS18B20 (Agua)
+    // 1. Lectura DS18B20 (Agua): D14 primero, fallback D15, fallback D32
     if (test_mode == '1' || test_mode == 'B') {
-      sensorAgua15.requestTemperatures();
-      temp_agua = sensorAgua15.getTempCByIndex(0);
+      sensorAgua14.requestTemperatures();
+      temp_agua = sensorAgua14.getTempCByIndex(0);
       if (temp_agua == DEVICE_DISCONNECTED_C || temp_agua <= -100.0) {
-        sensorAgua32.requestTemperatures();
-        float t32 = sensorAgua32.getTempCByIndex(0);
-        if (t32 > -100.0 && t32 != DEVICE_DISCONNECTED_C) {
-          temp_agua = t32;
+        sensorAgua15.requestTemperatures();
+        float t15 = sensorAgua15.getTempCByIndex(0);
+        if (t15 > -100.0 && t15 != DEVICE_DISCONNECTED_C) {
+          temp_agua = t15;
+        } else {
+          sensorAgua32.requestTemperatures();
+          float t32 = sensorAgua32.getTempCByIndex(0);
+          if (t32 > -100.0 && t32 != DEVICE_DISCONNECTED_C) {
+            temp_agua = t32;
+          }
         }
       }
     }
 
-    // 2. Lectura DHT22 (Ambiente & Humedad)
+    // 2. Lectura DHT22 (Ambiente & Humedad): D4 primero, fallback D13
     if (test_mode == '2' || test_mode == 'B') {
       temp_aire = dht4.readTemperature();
       hum_aire  = dht4.readHumidity();
@@ -125,11 +140,11 @@ void loop() {
     // --- DIAGNÓSTICO EN TIEMPO REAL PARA TERMINAL IDE ---
     Serial.print(">>> [BANCO] t=");
     Serial.print(t, 1);
-    Serial.print("s | S1 DS18B20 (Agua): ");
+    Serial.print("s | S1 DS18B20 (Agua D14): ");
     if (temp_agua <= -100.0) Serial.print("DESCONECTADO (-127)");
     else { Serial.print(temp_agua, 2); Serial.print(" °C [OK]"); }
 
-    Serial.print(" | S2 DHT22 (Aire): ");
+    Serial.print(" | S2 DHT22 (Aire D4): ");
     if (temp_aire <= -100.0) Serial.print("ERROR / DESCONECTADO");
     else { 
       Serial.print(temp_aire, 2); 

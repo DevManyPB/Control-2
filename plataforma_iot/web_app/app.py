@@ -294,8 +294,11 @@ def send_cmd():
     global ser
     cmd = request.json.get('cmd', '') if request.json else ''
     if ser and ser.is_open and cmd:
-        ser.write(f"{cmd}\n".encode('utf-8'))
-        return jsonify({"status": "success", "sent": cmd})
+        try:
+            ser.write(f"{cmd}\n".encode('utf-8'))
+            return jsonify({"status": "success", "sent": cmd})
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)})
     return jsonify({"status": "error", "message": "Puerto serie no conectado o comando vacio"})
 
 @app.route('/config_pi', methods=['GET', 'POST'])

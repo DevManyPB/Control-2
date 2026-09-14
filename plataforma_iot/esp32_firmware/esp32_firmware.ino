@@ -5,63 +5,149 @@
 #include <ESP32Servo.h>
 #include "driver/gpio.h"
 
-// ==========================================
+// ========================================================
 // ASIGNACIÓN DE PINES HARDWARE (ESP32)
 // ALUNA PBR-02 (Arquitectura Híbrida DS18B20 + DHT22)
-// ==========================================
-const int PIN_SENSOR_AGUA_15 = 15; // D15: Sensor de Agua / Reactor (DS18B20)
-const int PIN_SENSOR_AGUA_32 = 32; // D32: Canal alternativo de Agua
-const int PIN_DHT_4          = 4;  // D4: Sensor Ambiente DHT22 (Data)
-const int PIN_DHT_13         = 13; // D13: Canal alternativo DHT22
-const int PELTIER_PWM_PIN    = 25; // D25: Control PWM MOSFET Celda Peltier
-const int SERVO_PIN          = 27; // D27: Servomotor MG996R Escudo Orbital
+// ========================================================
+int pin_ds18b20_activo = 14; // D14: Canal principal Agua (DS18B20)
+int pin_dht_activo     = 4;  // D4:  Canal principal Ambiente (DHT22)
+const int PELTIER_PWM_PIN = 25; // D25: Control PWM MOSFET Celda Peltier
+const int SERVO_PIN       = 27; // D27: Servomotor MG996R Escudo Orbital
 
 #define DHTTYPE DHT22
 
-// ==========================================
-// INSTANCIAS DE HARDWARE
-// ==========================================
-OneWire oneWireAgua15(PIN_SENSOR_AGUA_15);
-DallasTemperature sensorAgua15(&oneWireAgua15);
-
-OneWire oneWireAgua32(PIN_SENSOR_AGUA_32);
-DallasTemperature sensorAgua32(&oneWireAgua32);
-
-DHT dht4(PIN_DHT_4, DHTTYPE);
-DHT dht13(PIN_DHT_13, DHTTYPE);
-
+OneWire oneWireBus(pin_ds18b20_activo);
+DallasTemperature sensorAgua(&oneWireBus);
+DHT sensorDHT(pin_dht_activo, DHTTYPE);
 Servo servoCortina;
 
-// ==========================================
-// VARIABLES DE ESTADO Y TELEMETRÍA
-// ==========================================
+// Lista de pines candidatos para escaneo automático
+const int PINES_CANDIDATOS[] = {14, 15, 13, 12, 4, 32, 33, 27, 26, 21, 22, 23, 19, 18, 5, 2};
+const int NUM_CANDIDATOS = sizeof(PINES_CANDIDATOS) / sizeof(PINES_CANDIDATOS[0]);
+
 unsigned long last_read = 0;
 bool is_testing = false;
 unsigned long start_time = 0;
-int pwm_actual = 0;         // 0 a 255
-int servo_angle_actual = 0; // 0° (Abierto) a 180° (Cerrado)
+int pwm_actual = 0;
+int servo_angle_actual = 0;
+
+void escanearHardware() {
+  Serial.println("\n==================================================");
+  Serial.println("   ALUNA PBR-02 | DIAGNÓSTICO AVANZADO DE PINES   ");
+  Serial.println("==================================================");
+  
+  bool encontrado_ds18b20 = false;
+  bool encontrado_dht22 = false;
+
+  for (int i = 0; i < NUM_CANDIDATOS; i++) {
+    int pin = PINES_CANDIDATOS[i];
+    
+    // Test 1: Nivel lógico en reposo (sin pull-up interno)
+    pinMode(pin, INPUT);
+    delay(5);
+    int raw_level = digitalRead(pin);
+
+    // Test 2: Nivel con pull-up interno
+    pinMode(pin, INPUT_PULLUP);
+    gpio_pullup_en((gpio_num_t)pin);
+    delay(5);
+    int pullup_level = digitalRead(pin);
+
+    // Test 3: Búsqueda 1-Wire (DS18B20)
+    OneWire ow(pin);
+    uint8_t addr[8];
+    uint8_t reset_res = ow.reset();
+    bool ds_found = false;
+    if (reset_res == 1) {
+      if (ow.search(addr)) {
+        ds_found = true;
+      }
+      ow.reset_search();
+    }
+
+    // Diagnóstico individual por pin
+    Serial.print("GPIO ");
+    if (pin < 10) Serial.print(" ");
+    Serial.print(pin);
+    Serial.print(" (D");
+    Serial.print(pin);
+    Serial.print("): Raw=");
+    Serial.print(raw_level ? "HIGH" : "LOW ");
+    Serial.print(" | Pullup=");
+    Serial.print(pullup_level ? "HIGH" : "LOW ");
+
+    if (ds_found) {
+      Serial.print(" | >>> [DS18B20 DETECTADO] Chip: 0x");
+      Serial.print(addr[0], HEX);
+      Serial.println(" <<<");
+      if (!encontrado_ds18b20) {
+        pin_ds18b20_activo = pin;
+        encontrado_ds18b20 = true;
+      }
+    } else if (reset_res == 1) {
+      Serial.println(" | [1-Wire Presencia OK pero sin ROM]");
+      if (!encontrado_ds18b20) {
+        pin_ds18b20_activo = pin;
+        encontrado_ds18b20 = true;
+      }
+    } else {
+      if (raw_level == 0 && pullup_level == 0) {
+        Serial.println(" | [Cortocircuito a GND]");
+      } else if (raw_level == 0 && pullup_level == 1) {
+        Serial.println(" | [Sin pullup externo / Abierto]");
+      } else {
+        Serial.println(" | [Línea en HIGH]");
+      }
+    }
+  }
+
+  // Escaneo DHT22 en pines típicos
+  const int PINES_DHT_TEST[] = {4, 13, 14, 15, 32, 33, 27};
+  for (int j = 0; j < 7; j++) {
+    int p = PINES_DHT_TEST[j];
+    DHT test_dht(p, DHTTYPE);
+    test_dht.begin();
+    delay(20);
+    float t = test_dht.readTemperature();
+    float h = test_dht.readHumidity();
+    if (!isnan(t) && !isnan(h) && t > -40.0 && t < 80.0) {
+      Serial.print(">>> [DHT22 DETECTADO] en GPIO ");
+      Serial.print(p);
+      Serial.print(" -> Temp: ");
+      Serial.print(t, 1);
+      Serial.print(" °C | Hum: ");
+      Serial.print(h, 1);
+      Serial.println(" %");
+      if (!encontrado_dht22) {
+        pin_dht_activo = p;
+        encontrado_dht22 = true;
+      }
+    }
+  }
+
+  Serial.println("--------------------------------------------------");
+  Serial.print(">>> ASIGNACIÓN FINAL: Agua DS18B20 en D");
+  Serial.print(pin_ds18b20_activo);
+  Serial.print(" | Ambiente DHT22 en D");
+  Serial.println(pin_dht_activo);
+  Serial.println("==================================================\n");
+
+  // Re-inicializar buses activos
+  oneWireBus.begin(pin_ds18b20_activo);
+  pinMode(pin_ds18b20_activo, INPUT_PULLUP);
+  gpio_pullup_en((gpio_num_t)pin_ds18b20_activo);
+  sensorAgua.begin();
+  sensorAgua.setWaitForConversion(true);
+  sensorAgua.setResolution(10);
+
+  sensorDHT = DHT(pin_dht_activo, DHTTYPE);
+  sensorDHT.begin();
+}
 
 void setup() {
   Serial.begin(115200);
   delay(500);
-  
-  // Activar pull-ups internos para el DS18B20
-  pinMode(PIN_SENSOR_AGUA_15, INPUT_PULLUP);
-  pinMode(PIN_SENSOR_AGUA_32, INPUT_PULLUP);
-  gpio_pullup_en((gpio_num_t)PIN_SENSOR_AGUA_15);
-  gpio_pullup_en((gpio_num_t)PIN_SENSOR_AGUA_32);
 
-  sensorAgua15.begin();
-  sensorAgua32.begin();
-  sensorAgua15.setWaitForConversion(true);
-  sensorAgua32.setWaitForConversion(true);
-  sensorAgua15.setResolution(10); // 187 ms por conversión (rápido y ultra estable)
-  sensorAgua32.setResolution(10);
-
-  // Inicializar sensor DHT22 en D4 y D13
-  dht4.begin();
-  dht13.begin();
-  
   // Configuración PWM Peltier en D25 (1 kHz, 8 bits: 0-255)
   ledcAttach(PELTIER_PWM_PIN, 1000, 8);
   ledcWrite(PELTIER_PWM_PIN, 0);
@@ -69,14 +155,10 @@ void setup() {
   // Configuración Servomotor MG996R en D27 (50 Hz estándar)
   servoCortina.setPeriodHertz(50);
   servoCortina.attach(SERVO_PIN, 500, 2500);
-  servoCortina.write(0); // 0° = Escudo Abierto (Fotosíntesis)
+  servoCortina.write(0); // 0° = Escudo Abierto
 
-  Serial.println("==================================================");
-  Serial.println("   ALUNA PBR-02 | SISTEMA TÉRMICO HÍBRIDO         ");
-  Serial.println("   S1: DS18B20 (Agua en D15/D32)                  ");
-  Serial.println("   S2: DHT22 (Ambiente & Humedad en D4/D13)       ");
-  Serial.println("   Peltier PWM: Pin D25 | Servo Escudo: Pin D27   ");
-  Serial.println("==================================================");
+  // Ejecutar escáner de hardware
+  escanearHardware();
 }
 
 void loop() {
@@ -102,6 +184,9 @@ void loop() {
       servoCortina.write(0);
       Serial.println(">>> PARO TOTAL EJECUTADO (PWM = 0, SERVO = 0°)");
     }
+    else if (cmd == "SCAN" || cmd == "scan") {
+      escanearHardware();
+    }
     else if (cmd.startsWith("M:")) {
       int val = cmd.substring(2).toInt();
       pwm_actual = constrain(val, 0, 255);
@@ -125,45 +210,74 @@ void loop() {
   // ==========================================
   // TELEMETRÍA PERIÓDICA (CADA 2 SEGUNDOS)
   // ==========================================
-  if (is_testing) {
-    if (millis() - last_read >= 2000) {
-      last_read = millis();
-      
-      // 1. Lectura Sensor 1 (DS18B20 Agua): D15 primero, fallback a D32
-      sensorAgua15.requestTemperatures();
-      float temp_agua = sensorAgua15.getTempCByIndex(0);
-      if (temp_agua == DEVICE_DISCONNECTED_C || temp_agua <= -100.0) {
-        sensorAgua32.requestTemperatures();
-        float temp32 = sensorAgua32.getTempCByIndex(0);
-        if (temp32 > -100.0 && temp32 != DEVICE_DISCONNECTED_C) {
-          temp_agua = temp32;
+  if (millis() - last_read >= 2000) {
+    last_read = millis();
+    
+    // 1. Lectura Sensor 1 (DS18B20 Agua)
+    sensorAgua.requestTemperatures();
+    float temp_agua = sensorAgua.getTempCByIndex(0);
+
+    // Fallback rápido si no lee en el pin activo
+    if (temp_agua == DEVICE_DISCONNECTED_C || temp_agua <= -100.0) {
+      if (pin_ds18b20_activo != 14) {
+        OneWire ow14(14);
+        DallasTemperature s14(&ow14);
+        pinMode(14, INPUT_PULLUP);
+        gpio_pullup_en((gpio_num_t)14);
+        s14.begin();
+        s14.requestTemperatures();
+        float t14 = s14.getTempCByIndex(0);
+        if (t14 > -100.0 && t14 != DEVICE_DISCONNECTED_C) {
+          temp_agua = t14;
+          pin_ds18b20_activo = 14;
+        }
+      } else if (pin_ds18b20_activo != 15) {
+        OneWire ow15(15);
+        DallasTemperature s15(&ow15);
+        pinMode(15, INPUT_PULLUP);
+        gpio_pullup_en((gpio_num_t)15);
+        s15.begin();
+        s15.requestTemperatures();
+        float t15 = s15.getTempCByIndex(0);
+        if (t15 > -100.0 && t15 != DEVICE_DISCONNECTED_C) {
+          temp_agua = t15;
+          pin_ds18b20_activo = 15;
         }
       }
-
-      // 2. Lectura Sensor 2 (DHT22 Ambiente): D4 primero, fallback a D13
-      float temp_aire = dht4.readTemperature();
-      float hum_aire  = dht4.readHumidity();
-      if (isnan(temp_aire) || isnan(hum_aire)) {
-        temp_aire = dht13.readTemperature();
-        hum_aire  = dht13.readHumidity();
-      }
-      if (isnan(temp_aire)) temp_aire = -127.0;
-      if (isnan(hum_aire))  hum_aire  = 0.0;
-      
-      float t = (millis() - start_time) / 1000.0;
-      
-      // Formato CSV estándar: tiempo,pwm,temp_agua,temp_ambiente,angulo_servo,humedad
-      Serial.print(t, 2);
-      Serial.print(",");
-      Serial.print(pwm_actual);
-      Serial.print(",");
-      Serial.print(temp_agua, 2);
-      Serial.print(",");
-      Serial.print(temp_aire, 2);
-      Serial.print(",");
-      Serial.print(servo_angle_actual);
-      Serial.print(",");
-      Serial.println(hum_aire, 1);
     }
+
+    // 2. Lectura Sensor 2 (DHT22 Ambiente)
+    float temp_aire = sensorDHT.readTemperature();
+    float hum_aire  = sensorDHT.readHumidity();
+    if (isnan(temp_aire) || isnan(hum_aire)) {
+      // Probar fallback a D13 si activo es D4, o viceversa
+      int alt_pin = (pin_dht_activo == 4) ? 13 : 4;
+      DHT dhtAlt(alt_pin, DHTTYPE);
+      dhtAlt.begin();
+      float ta = dhtAlt.readTemperature();
+      float ha = dhtAlt.readHumidity();
+      if (!isnan(ta) && !isnan(ha)) {
+        temp_aire = ta;
+        hum_aire = ha;
+        pin_dht_activo = alt_pin;
+      }
+    }
+    if (isnan(temp_aire)) temp_aire = -127.0;
+    if (isnan(hum_aire))  hum_aire  = 0.0;
+    
+    float t = is_testing ? ((millis() - start_time) / 1000.0) : 0.0;
+    
+    // Formato CSV estándar: tiempo,pwm,temp_agua,temp_ambiente,angulo_servo,humedad
+    Serial.print(t, 2);
+    Serial.print(",");
+    Serial.print(pwm_actual);
+    Serial.print(",");
+    Serial.print(temp_agua, 2);
+    Serial.print(",");
+    Serial.print(temp_aire, 2);
+    Serial.print(",");
+    Serial.print(servo_angle_actual);
+    Serial.print(",");
+    Serial.println(hum_aire, 1);
   }
 }
