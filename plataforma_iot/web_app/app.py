@@ -248,11 +248,13 @@ def start_test():
         recorded_data = {"time": [], "pwm": [], "temp1": [], "temp2": [], "servo_angle": []}
         control_config["integral_sum"] = 0.0
         control_config["last_control_time"] = None
+        control_config["current_pwm"] = 153
+        control_config["mode"] = "step"
         
-        # Enviar comando de arranque
+        # Enviar comando de arranque (PWM 153 = 60%)
         ser.write(b'S\n')
         is_testing = True
-        return jsonify({"status": "success"})
+        return jsonify({"status": "success", "pwm": 153})
     return jsonify({"status": "error", "message": "Puerto Serie no conectado"})
 
 @app.route('/stop', methods=['POST'])

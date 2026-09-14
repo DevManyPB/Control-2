@@ -75,6 +75,8 @@ void setup() {
   dht4.begin();
 
   // PWM Peltier en D25 (1 kHz, 8 bits)
+  pinMode(PELTIER_PWM_PIN, OUTPUT);
+  digitalWrite(PELTIER_PWM_PIN, LOW);
   ledcAttach(PELTIER_PWM_PIN, 1000, 8);
   ledcWrite(PELTIER_PWM_PIN, 0);
 
@@ -91,6 +93,12 @@ void setup() {
   Serial.println("==================================================");
 }
 
+void aplicarPeltierPWM(int val) {
+  pwm_actual = constrain(val, 0, 255);
+  ledcWrite(PELTIER_PWM_PIN, pwm_actual);
+  analogWrite(PELTIER_PWM_PIN, pwm_actual);
+}
+
 void loop() {
   // ==========================================
   // LECTURA DE COMANDOS DESDE LA WEB / SERIAL
@@ -102,22 +110,19 @@ void loop() {
     if (cmd == "S" || cmd == "s") {
       is_testing = true;
       start_time = millis();
-      pwm_actual = 153;
-      ledcWrite(PELTIER_PWM_PIN, pwm_actual);
+      aplicarPeltierPWM(153);
       Serial.println(">>> ENSAYO INICIADO: PWM = 153 (60%)");
     } 
     else if (cmd == "X" || cmd == "x") {
       is_testing = false;
-      pwm_actual = 0;
-      ledcWrite(PELTIER_PWM_PIN, 0);
+      aplicarPeltierPWM(0);
       servo_angle_actual = 0;
       servoCortina.write(0);
       Serial.println(">>> PARO TOTAL EJECUTADO (PWM = 0, SERVO = 0°)");
     }
     else if (cmd.startsWith("M:")) {
       int val = cmd.substring(2).toInt();
-      pwm_actual = constrain(val, 0, 255);
-      ledcWrite(PELTIER_PWM_PIN, pwm_actual);
+      aplicarPeltierPWM(val);
       if (!is_testing) {
         is_testing = true;
         start_time = millis();

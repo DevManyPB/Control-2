@@ -985,7 +985,8 @@
                     if (connData.status === 'success') {
                         setConnectedState(espPort);
                         showToast("ESP32 Autodetectada", `Enlace establecido en ${espPort}`, "🔌");
-                        startSystem(); // Iniciar telemetría automáticamente
+                        isPolling = true;
+                        pollTelemetry(); // Monitoreo pasivo en vivo
                     }
                 }
             } catch (e) {
@@ -1185,21 +1186,55 @@
         // FUNCIONES DE CONTROL
         // =================================================================
         async function startSystem() {
-            const res = await fetch(`${API}/start`, { method: 'POST' });
-            const data = await res.json();
-            if (data.status === 'error') return showToast("Error", data.message, "⚠️");
-            isPolling = true;
-            pollTelemetry();
+            const btnStart = document.getElementById('btn-start');
+            if (btnStart) {
+                btnStart.innerHTML = `<span>⏳</span> INICIANDO...`;
+            }
+            try {
+                const res = await fetch(`${API}/start`, { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'error') {
+                    if (btnStart) {
+                        btnStart.innerHTML = `<span>▶</span> INICIAR GRABACIÓN`;
+                    }
+                    return showToast("Error", data.message, "⚠️");
+                }
+                
+                // Actualizar inmediatamente slider y métricas al 60%
+                updatePwmUI(153);
+
+                // Cambiar estado visual del botón
+                if (btnStart) {
+                    btnStart.innerHTML = `<span>🔴</span> GRABANDO ENSAYO (PWM 60%)`;
+                    btnStart.className = "px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-mono font-bold rounded-xl shadow-lg transition flex items-center gap-2 animate-pulse border border-rose-400";
+                }
+
+                showToast("Ensayo Escalón Iniciado", "Escalón PWM 153 (60%) aplicado a la Peltier. Cronómetro en marcha.", "🚀");
+                isPolling = true;
+                pollTelemetry();
+            } catch (err) {
+                if (btnStart) btnStart.innerHTML = `<span>▶</span> INICIAR GRABACIÓN`;
+                showToast("Error de Comunicación", "No se pudo conectar con el servidor backend.", "⚠️");
+            }
         }
 
         async function stopSystem() {
-            await fetch(`${API}/stop`, { method: 'POST' });
-            isPolling = false;
+            try {
+                await fetch(`${API}/stop`, { method: 'POST' });
+            } catch(e) {}
+            
             updatePwmUI(0);
             updateServoUI(0);
+            
+            const btnStart = document.getElementById('btn-start');
+            if (btnStart) {
+                btnStart.innerHTML = `<span>▶</span> INICIAR GRABACIÓN`;
+                btnStart.className = "px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold rounded-xl shadow-lg transition flex items-center gap-2";
+            }
+
             document.getElementById('auto-pi-badge').textContent = "INACTIVO";
             document.getElementById('auto-pi-badge').className = "px-3 py-1 rounded-full text-xs font-mono font-bold bg-slate-900 text-slate-400 border border-white/10";
-            showToast("Paro Total Seguro", "Peltier apagado y escudo en 0°", "🛑");
+            showToast("Paro Total Seguro", "Peltier apagada (PWM = 0). Datos listos para Sintonizar Cohen-Coon.", "🛑");
         }
 
         async function setPwm(val) {
@@ -1284,7 +1319,7 @@
             const res = await fetch(`${API}/calculate`);
             const data = await res.json();
             if (data.status === 'success') {
-                showToast("Sintonización Exitosa", `Kp: ${data.Kp} | Ki: ${data.Ki}`, "📐");
+                showToast("FOPDT Cohen-Coon", `K=${data.K} | τ=${data.tau}s | L=${data.L}s => Kp=${data.Kp} | Ki=${data.Ki}`, "📐");
             } else {
                 showToast("Aviso FOPDT", data.message, "⚠️");
             }
