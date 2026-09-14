@@ -1070,6 +1070,7 @@
             },
             yAxis: {
                 type: 'value',
+                scale: true,
                 axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.1)' } },
                 axisLabel: { color: '#64748b', fontFamily: 'JetBrains Mono', formatter: '{value} °C' },
                 splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.04)' } }
@@ -1256,8 +1257,8 @@
             
             const amps = ((val / 255) * 4.5).toFixed(1);
             const watts = Math.round((val / 255) * 4.5 * 12);
-            document.getElementById('val-watts').textContent = `${watts} W`;
-            document.getElementById('val-amps').textContent = `${amps} A`;
+            document.getElementById('val-watts').textContent = `~${watts} W`;
+            document.getElementById('val-amps').textContent = `~${amps} A (est.)`;
 
             const offset = 251.2 - (pct / 100) * 251.2;
             document.getElementById('gauge-pwm-ring').style.strokeDashoffset = offset;
@@ -1379,7 +1380,9 @@
                     document.getElementById('gauge-t2-ring').style.strokeDashoffset = 251.2 - (pctT2 / 100) * 251.2;
                 }
 
-                const lastHum = latest ? latest.humidity : null;
+                const lastHum = (t.humidity && t.humidity.length > 0) 
+                    ? t.humidity[t.humidity.length - 1] 
+                    : (payload.latest ? payload.latest.humidity : null);
 
                 if (lastT1 !== null || lastT2 !== null) {
                     updateSensorDiagnostics(lastT1, lastT2, lastHum);
@@ -1394,12 +1397,16 @@
                     const timeLabels = t.time.map(s => Math.round(s) + 's');
                     const setpointLine = t.time.map(() => 21.0);
 
+                    // Filtrar lecturas espurias (-127) para mantener la escala precisa
+                    const cleanT1 = t.temp1.map(v => (v <= -50 || v > 100) ? null : v);
+                    const cleanT2 = t.temp2.map(v => (v <= -50 || v > 100) ? null : v);
+
                     if (chartMain) {
                         chartMain.setOption({
                             xAxis: { data: timeLabels },
                             series: [
-                                { name: 'T. Reactor (Agua)', data: t.temp1 },
-                                { name: 'T. Ambiente (Disipador)', data: t.temp2 },
+                                { name: 'T. Reactor (Agua)', data: cleanT1 },
+                                { name: 'T. Ambiente (Disipador)', data: cleanT2 },
                                 { name: 'Consigna 21.0°C', data: setpointLine }
                             ]
                         });
@@ -1415,20 +1422,18 @@
                         });
                     }
 
-                    // Actualizar métricas del Banco de Diagnóstico de Sensores
-                    updateSensorDiagnostics(lastT1, lastT2);
-
                     if (chartSensors) {
                         chartSensors.setOption({
                             xAxis: { data: timeLabels },
                             series: [
-                                { name: 'Sensor 1: Agua (D15)', data: t.temp1 },
-                                { name: 'Sensor 2: Ambiente (D13)', data: t.temp2 }
+                                { name: 'Sensor 1: Agua (D15)', data: cleanT1 },
+                                { name: 'Sensor 2: Ambiente (D13)', data: cleanT2 }
                             ]
                         });
                     }
                 }
             } catch (e) {
+                console.error("Error en pollTelemetry:", e);
                 // Si falla la lectura, verificar si la ESP32 se desconectó
                 checkDeviceLive();
             }
@@ -1597,6 +1602,7 @@
                 },
                 yAxis: {
                     type: 'value',
+                    scale: true,
                     axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.1)' } },
                     axisLabel: { color: '#64748b', fontFamily: 'JetBrains Mono', formatter: '{value} °C' },
                     splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.04)' } }
