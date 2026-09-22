@@ -1,0 +1,91 @@
+\section{Diseño Eléctrico, Mapeo de Pines y Conexiones de Hardware}
+
+\subsection{Tabla Maestra de Conexiones Físicas}
+La confiabilidad del sistema de control depende directamente de la integridad del cableado, la estabilidad de las masas y la ausencia de bucles de tierra o caídas de tensión inductivas. En la Tabla~\ref{tab:conexiones} se detalla la asignación pin a pin implementada y verificada en el prototipo físico de ALUNA PBR-02.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Tabla Maestra de Conexiones del Sistema Embebido ALUNA PBR-02.}
+\label{tab:conexiones}
+\begin{tabularx}{\textwidth}{@{}l l l l L@{}}
+\toprule
+\textbf{Dispositivo} & \textbf{Línea / Color} & \textbf{Pin ESP32} & \textbf{Pin Físico} & \textbf{Función y Acondicionamiento} \\ \midrule
+\textbf{Sensor 1 (Agua)} & Rojo (VCC) & \texttt{3V3} & Fila Inf. Pin 1 & Alimentación lógica de $3.3\,\text{V}$. \\
+\textit{DS18B20 Inox} & Negro (GND) & \texttt{GND} & Fila Inf. Pin 2 & Masa común de referencia. \\
+ & Amarillo (Datos) & \texttt{D15} & GPIO 15 & Bus 1-Wire con resistencia pull-up externa de $4.7\,\text{k}\Omega$ a 3V3. \\ \midrule
+\textbf{Sensor 2 (Aire)} & Rojo (VCC) & \texttt{3V3} & Fila Inf. Pin 1 & Alimentación compartida $3.3\,\text{V}$. \\
+\textit{DS18B20 / DHT} & Negro (GND) & \texttt{GND} & Fila Inf. Pin 2 & Masa compartida. \\
+ & Amarillo (Datos) & \texttt{D13} & GPIO 13 & Bus 1-Wire / Señal digital ambiente. \\ \midrule
+\textbf{Módulo MOSFET} & Señal (PWM) & \texttt{D25} & GPIO 25 & Pulso PWM a $1\,\text{kHz}$ ($0-3.3\,\text{V}$). \\
+\textit{D4184 Doble} & Masa (GND) & \texttt{GND} & Fila Sup. Pin 2 & \textbf{Tierra de señal común obligatoria}. \\
+ & Bornera \texttt{VIN+} & Fuente 12V & Bornera $(+)$ & Línea principal positiva de potencia. \\
+ & Bornera \texttt{VIN-} & Fuente 12V & Bornera $(-)$ & Masa de potencia principal (retorno). \\ \midrule
+\textbf{Celda Peltier} & Rojo (+) & \texttt{OUT+} & Bornera MOSFET & Tensión positiva directa ($+12\,\text{V}$). \\
+\textit{TEC1-12706} & Negro (-) & \texttt{OUT-} & Bornera MOSFET & Drenaje conmutado por MOSFET (PWM). \\ \midrule
+\textbf{Servomotor} & Señal (PWM) & \texttt{D27} & GPIO 27 & Señal de control angular a $50\,\text{Hz}$. \\
+\textit{MG996R} & VCC (+) & LM2596 Out & $+5\,\text{V}$ Buck & Alimentación limpia aislada (hasta $2.5\,\text{A}$). \\
+ & GND (-) & LM2596 Out & Masa Común & Referencia de tierra acoplada. \\ \midrule
+\textbf{CPU Cooler} & Rojo (Fan 12V) & Fuente 12V & Bornera $(+)$ & Enfriamiento forzado permanente ($100\%$). \\
+\textit{KF200-DGT} & Negro (Masa) & Fuente 12V & Bornera $(-)$ & Masa directa. \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Consideración Eléctrica de Seguridad: Tierra Común (GND).}
+El terminal \texttt{GND} de la ESP32 \textbf{debe conectarse obligatoriamente} a la masa de control del MOSFET y a la masa del regulador Buck LM2596. Sin esta unión equipotencial, el potencial de compuerta ($V_{GS}$) queda flotante respecto al terminal de potencia, provocando que los transistores MOSFET no operen en saturación o disipen calor destructivo al conmutar indebidamente en su región activa lineal.
+
+\subsection{Esquema de Distribución de Potencia y Filtrado}
+La celda Peltier demanda picos de hasta $4.5\,\text{A}$, mientras que el servomotor MG996R genera picos inductivos durante el arranque de hasta $2.2\,\text{A}$. Si el servomotor se alimentara del riel de $5\,\text{V}$ de la ESP32, el microcontrolador sufriría caídas de tensión (\textit{brownouts}) y reinicios aleatorios.
+
+Para desacoplar las perturbaciones:
+\begin{itemize}
+    \item Se utilizó una fuente conmutada industrial de \textbf{$12\,\text{V}$ / $10\,\text{A}$ ($120\,\text{W}$)}, la cual alimenta directamente la etapa de potencia de la Peltier y el ventilador de la torre disipadora.
+    \item Se intercaló un regulador conmutado \textbf{Buck DC-DC LM2596}, reduciendo los $12\,\text{V}$ a unos estables $5.0\,\text{V}$ dedicados exclusivamente al servomotor MG996R.
+    \item La ESP32 se alimenta independientemente a través de su puerto USB o mediante un regulador lineal LDO de bajo ruido.
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{0.96\linewidth}{!}{%
+    \begin{tikzpicture}[
+        pbox/.style={rectangle, draw=black!85, fill=gray!5, thick, rounded corners=2pt, minimum width=3.0cm, minimum height=1.15cm, align=center, font=\footnotesize\bfseries},
+        cbox/.style={rectangle, draw=black!85, fill=gray!12, thick, rounded corners=2pt, minimum width=3.0cm, minimum height=1.15cm, align=center, font=\footnotesize\bfseries},
+        wire/.style={draw=black!85, thick, -{Latex[length=2.2mm]}},
+        pwired/.style={draw=black!90, ultra thick, -{Latex[length=2.2mm]}},
+        gndwire/.style={draw=black!70, thick, dashed, -{Latex[length=2.2mm]}}
+    ]
+        % Nodos del sistema distribuidos en 3 columnas amplias
+        \node [cbox] (sensores) at (0, 4.0) {Sensores DS18B20\\Agua (D15) / Aire (D13)};
+        \node [cbox] (esp) at (7.2, 4.0) {Microcontrolador\\ESP32 (38 Pines)};
+
+        \node [pbox] (psu) at (0, 1.2) {Fuente Conmutada\\$12\,\text{V} / 10\,\text{A}$ ($120\,\text{W}$)};
+        \node [pbox] (mosfet) at (7.2, 1.6) {Módulo MOSFET\\D4184 ($400\,\text{W}$)};
+        \node [pbox] (buck) at (7.2, -0.8) {Regulador Buck\\LM2596 ($12\to 5.0\,\text{V}$)};
+
+        \node [pbox] (peltier) at (13.8, 1.6) {Celda Peltier\\TEC1-12706};
+        \node [pbox] (servo) at (13.8, -0.8) {Servomotor\\MG996R (Escudo)};
+        \node [pbox] (cooler) at (0, -1.2) {CPU Cooler\\KF200-DGT ($12\,\text{V}$)};
+
+        % Conexiones de Lógica y Control (ESP32)
+        \draw [wire] (sensores.east) -- node[midway, above=2pt, font=\scriptsize] {Bus 1-Wire (D15/D13)} (esp.west);
+        \draw [wire] (esp.south) -- node[midway, right=3pt, font=\scriptsize] {PWM $1\,\text{kHz}$ (GPIO 25)} (mosfet.north);
+        
+        % PWM de Servo rodeando limpiamente por el exterior derecho
+        \draw [wire] (esp.east) -- node[midway, above=2pt, font=\scriptsize] {PWM $50\,\text{Hz}$ (GPIO 27)} ++(8.0, 0) |- (servo.east);
+
+        % Distribución de Potencia de 12V
+        \draw [pwired] (psu.east) -- node[midway, above=2pt, font=\scriptsize] {$+12\,\text{V}$ Potencia} ++(2.4, 0) coordinate (pdist) |- (mosfet.west);
+        \draw [pwired] (pdist) |- node[pos=0.35, left=2pt, font=\scriptsize] {$+12\,\text{V}$} (buck.west);
+        \draw [pwired] (psu.south) -- node[midway, right=2pt, font=\scriptsize] {$+12\,\text{V}$ Fan} (cooler.north);
+
+        % Salidas de Potencia hacia Actuadores
+        \draw [pwired] (mosfet.east) -- node[midway, above=2pt, font=\scriptsize] {OUT+ / OUT- (PWM)} (peltier.west);
+        \draw [pwired] (buck.east) -- node[midway, above=2pt, font=\scriptsize] {$+5.0\,\text{V}$ Reg.} (servo.west);
+
+        % Línea de Tierra Común (GND Equipotencial) en área despejada
+        \draw [gndwire] ($(esp.south)-(1.2, 0)$) -- ++(0, -1.3) -| node[pos=0.25, above=2pt, font=\scriptsize] {GND Común} ($(psu.north)+(0.3, 0)$);
+    \end{tikzpicture}%
+    }
+    \caption{Diagrama esquemático de interconexión eléctrica y distribución de potencia.}
+    \label{fig:circuito_potencia}
+\end{figure}

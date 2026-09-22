@@ -9,31 +9,30 @@
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
 \usepackage{geometry}
 \usepackage{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc,decorations.pathreplacing,babel}
 \usepackage{listings}
-\usepackage{tcolorbox}
-\tcbuselibrary{skins,breakable}
 \usepackage{hyperref}
 
 % Márgenes y diseño de página
 \geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
 
-% Paleta de colores institucional y técnica
+% Paleta de colores institucional y técnica (sobria)
 \definecolor{alunagreen}{RGB}{15, 118, 110}
 \definecolor{alunadark}{RGB}{15, 23, 42}
-\definecolor{alunacyan}{RGB}{6, 182, 212}
-\definecolor{alunapurple}{RGB}{147, 51, 234}
-\definecolor{alunagray}{RGB}{241, 245, 249}
+\definecolor{alunagray}{RGB}{245, 247, 250}
 
 % Configuración de enlaces hipertexto
 \hypersetup{
     colorlinks=true,
-    linkcolor=alunagreen,
-    filecolor=alunapurple,      
-    urlcolor=alunacyan,
+    linkcolor=black,
+    filecolor=black,      
+    urlcolor=blue!70!black,
     pdftitle={Manual de Operación y Control Térmico - ALUNA PBR-02},
     pdfauthor={Raúl Baytero, Jhon Cárdenas, Santiago Cavadia, Iván Meza - Universidad del Magdalena}
 }
@@ -41,11 +40,12 @@
 % Configuración de listados de código
 \lstset{
     basicstyle=\ttfamily\footnotesize,
-    keywordstyle=\color{alunagreen}\bfseries,
-    commentstyle=\color{gray},
-    stringstyle=\color{alunapurple},
+    keywordstyle=\bfseries\color{black},
+    commentstyle=\color{gray!70!black}\itshape,
+    stringstyle=\color{gray!40!black},
     backgroundcolor=\color{alunagray},
     frame=single,
+    rulecolor=\color{gray!40},
     breaklines=true,
     captionpos=b,
     numbers=left,
@@ -53,23 +53,21 @@
     showstringspaces=false
 }
 
-% Estilo de cajas de aviso (tcolorbox)
-\newtcolorbox{alertaBox}[1]{
-    colback=red!5!white,
-    colframe=red!75!black,
-    fonttitle=\bfseries,
-    title=#1,
-    arc=3mm,
-    boxrule=1mm
+% Entornos sobrios de advertencia y nota técnica (estilo reporte de ingeniería)
+\newenvironment{alertaBox}[1]{%
+    \vspace{0.35cm}\noindent\textbf{\color{black}ADVERTENCIA DE SEGURIDAD: #1}\par\nopagebreak
+    \vspace{2pt}\hrule height 0.8pt\vspace{4pt}\par\nopagebreak
+    \small
+}{%
+    \par\vspace{4pt}\hrule height 0.4pt\vspace{0.35cm}
 }
 
-\newtcolorbox{notaBox}[1]{
-    colback=alunagreen!5!white,
-    colframe=alunagreen!85!black,
-    fonttitle=\bfseries,
-    title=#1,
-    arc=3mm,
-    boxrule=0.8mm
+\newenvironment{notaBox}[1]{%
+    \vspace{0.35cm}\noindent\textbf{\color{black}NOTA TÉCNICA: #1}\par\nopagebreak
+    \vspace{2pt}\hrule height 0.8pt\vspace{4pt}\par\nopagebreak
+    \small
+}{%
+    \par\vspace{4pt}\hrule height 0.4pt\vspace{0.35cm}
 }
 
 % =========================================================================
@@ -172,7 +170,7 @@ En nuestro biorreactor se invierte la necesidad funcional: en lugar de retener c
 \centering
 \caption{Componentes físicos y especificaciones del sistema ALUNA PBR-02.}
 \label{tab:bom}
-\begin{tabular}{lp{6cm}p{4cm}}
+\begin{tabularx}{\textwidth}{@{}l L L@{}}
 \toprule
 \textbf{Componente} & \textbf{Especificación Técnica} & \textbf{Función en el Sistema} \\
 \midrule
@@ -189,7 +187,7 @@ En nuestro biorreactor se invierte la necesidad funcional: en lugar de retener c
 \textbf{Reductor Buck 5V} & Módulo LM2596 o fuente 5V 2A independiente & Alimentación dedicada para servo MG996R \\
 \textbf{Pasta Térmica} & Compuesto siliconado con óxido de zinc & Acoplamiento térmico en ambas caras Peltier \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 % -------------------------------------------------------------------------
@@ -207,7 +205,7 @@ El pin \textbf{GND} de la ESP32 \underline{debe} estar físicamente unido al pin
 \centering
 \caption{Conexiones eléctricas en la placa ESP32 (38 pines).}
 \label{tab:conexiones}
-\begin{tabular}{llll}
+\begin{tabularx}{\textwidth}{@{}l l l L@{}}
 \toprule
 \textbf{Señal / Función} & \textbf{Pin Físico ESP32} & \textbf{Ubicación en Placa} & \textbf{Detalle Eléctrico} \\
 \midrule
@@ -225,7 +223,7 @@ El pin \textbf{GND} de la ESP32 \underline{debe} estar físicamente unido al pin
 \textbf{Servo MG996R - Señal} & \texttt{D27} & Fila Superior, Pin 6 & Salida PWM (50 Hz, pulsos $500 - 2500\,\mu\text{s}$) \\
 \textbf{Servo MG996R - GND} & \texttt{GND} & Fila Superior, Pin 2 & Retorno común a fuente 5V del servo \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \begin{notaBox}{Alimentación del Servomotor MG996R}
@@ -234,21 +232,34 @@ El cable rojo del servo \textbf{NUNCA} debe conectarse al pin 3V3 ni al pin VIN 
 
 \subsection{Esquema Funcional de Flujo Eléctrico}
 \begin{center}
-\begin{tikzpicture}[node distance=1.8cm, auto, >=Latex]
-    \node [draw, rectangle, fill=alunagray, rounded corners, minimum width=3cm, minimum height=1cm] (fuente) {\textbf{Fuente 12V / 10A}};
-    \node [draw, rectangle, fill=alunagreen!20, rounded corners, minimum width=2.5cm, right=2cm of fuente] (mosfet) {\textbf{MOSFET D4184}};
-    \node [draw, rectangle, fill=cyan!20, rounded corners, minimum width=2.5cm, right=2cm of mosfet] (peltier) {\textbf{Peltier TEC1-12706}};
-    \node [draw, rectangle, fill=alunapurple!20, rounded corners, minimum width=3cm, below=2cm of fuente] (esp32) {\textbf{ESP32 Master}};
-    \node [draw, rectangle, fill=orange!20, rounded corners, minimum width=2.5cm, right=2cm of esp32] (servo) {\textbf{Servo MG996R}};
-    \node [draw, rectangle, fill=teal!20, rounded corners, minimum width=2.5cm, below=1.5cm of esp32] (sensores) {\textbf{Sensores DS18B20}};
+\resizebox{0.92\linewidth}{!}{%
+\begin{tikzpicture}[
+    box/.style={draw=black!85, rectangle, fill=gray!5, thick, rounded corners=2pt, minimum width=2.8cm, minimum height=1.1cm, align=center, font=\small\bfseries},
+    wire/.style={draw=black!85, thick, -{Latex[length=2.2mm]}},
+    pwire/.style={draw=black!90, ultra thick, -{Latex[length=2.2mm]}},
+    gndwire/.style={draw=black!70, thick, dashed, -{Latex[length=2.2mm]}}
+]
+    \node [box] (fuente) at (0, 2.5) {Fuente Conmutada\\$12\,\text{V} / 10\,\text{A}$};
+    \node [box] (mosfet) at (4.5, 2.5) {Módulo MOSFET\\D4184 ($400\,\text{W}$)};
+    \node [box] (peltier) at (9.0, 2.5) {Celda Peltier\\TEC1-12706};
 
-    \draw [->, ultra thick, color=red] (fuente) -- node[above]{\small 12V Potencia} (mosfet);
-    \draw [->, ultra thick, color=cyan] (mosfet) -- node[above]{\small PWM Conmutado} (peltier);
-    \draw [->, thick, color=blue] (esp32) -- node[left]{\small D25 (PWM)} (mosfet);
-    \draw [->, thick, color=purple] (esp32) -- node[above]{\small D27 (50Hz)} (servo);
-    \draw [<->, thick, color=teal] (esp32) -- node[right]{\small D15 / D13 (1-Wire)} (sensores);
-    \draw [dashed, thick] (fuente) -- node[left]{\small GND Común} (esp32);
-\end{tikzpicture}
+    \node [box] (esp32) at (0, 0) {Microcontrolador\\ESP32 Master};
+    \node [box] (servo) at (4.5, 0) {Servomotor\\MG996R (Escudo)};
+    \node [box] (sensores) at (0, -2.2) {Sensores DS18B20\\Agua (D15) / Aire (D13)};
+
+    % Potencia
+    \draw [pwire] (fuente.east) -- node[above, font=\footnotesize] {$+12\,\text{V}$ Potencia} (mosfet.west);
+    \draw [pwire] (mosfet.east) -- node[above, font=\footnotesize] {PWM Conmutado} (peltier.west);
+
+    % Control y Lógica
+    \draw [wire] (esp32.east) -- node[above, font=\footnotesize] {D27 ($50\,\text{Hz}$)} (servo.west);
+    \draw [wire] (esp32.north) -- node[right, font=\footnotesize] {D25 (PWM)} (esp32.north |- mosfet.south);
+    \draw [wire, <->] (esp32.south) -- node[right, font=\footnotesize] {Bus 1-Wire (D15/D13)} (sensores.north);
+
+    % GND Común
+    \draw [gndwire] (esp32.north west) -- node[left, font=\footnotesize] {GND Común} (fuente.south west);
+\end{tikzpicture}%
+}
 \end{center}
 
 % -------------------------------------------------------------------------
@@ -311,9 +322,9 @@ El algoritmo implementado en el backend ejecuta una estrategia coordinada entre 
 \begin{equation}
     \text{Acción}(T_{\text{agua}}) = 
     \begin{cases}
-        \text{PWM Modulado por PI}, \quad \theta_{\text{servo}} = 0^\circ & \text{si } T_{\text{agua}} \le 22.0^\circ\text{C} \quad (\text{Zona Normal}) \\
-        \text{PWM} = 255 \, (100\%), \quad \theta_{\text{servo}} = f(T) & \text{si } 22.0 < T_{\text{agua}} < 24.0^\circ\text{C} \quad (\text{Alerta}) \\
-        \text{PWM} = 255 \, (100\%), \quad \theta_{\text{servo}} = 180^\circ & \text{si } T_{\text{agua}} \ge 24.0^\circ\text{C} \quad (\text{Crítico / Sombra Total})
+        \text{PWM Modulado}, \; \theta_{\text{servo}} = 0^\circ & \text{si } T_{\text{agua}} \le 22.0\,^\circ\text{C} \quad (\text{Normal}) \\
+        \text{PWM } 100\%, \; \theta_{\text{servo}} = f(T) & \text{si } 22.0 < T_{\text{agua}} < 24.0\,^\circ\text{C} \quad (\text{Alerta}) \\
+        \text{PWM } 100\%, \; \theta_{\text{servo}} = 180^\circ & \text{si } T_{\text{agua}} \ge 24.0\,^\circ\text{C} \quad (\text{Sombra Total})
     \end{cases}
 \end{equation}
 

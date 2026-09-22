@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALUNA PBR-02 — Control Biomimético de Fotobiorreactor</title>
+    
+    <!-- Google Fonts: Space Grotesk (Títulos tecnológicos) + Inter (Lectura científica) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- KaTeX para renderizado matemático vectorial nítido -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+
+    <!-- Estilos UI/UX Optimizados -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Fondo dinámico sutil con orbes de gradiente y partículas bio-marinas -->
+    <div class="bg-scene">
+        <div class="bg-gradient"></div>
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+        <div class="glow-orb orb-3"></div>
+        <canvas id="particles-canvas"></canvas>
+    </div>
+
+    <!-- Navegación Lateral por Puntos (Tooltips integrados) -->
+    <nav class="slide-dots-container" id="slide-dots" aria-label="Navegación de diapositivas"></nav>
+
+    <!-- Contenedor Principal de la Presentación -->
+    <main class="presentation-container" id="presentation-container">
+
+        <!-- ============================================================ -->
+        <!-- SLIDE 01: PORTADA PRINCIPAL -->
+        <!-- ============================================================ -->
+        <section class="slide active" data-index="0" data-theme="teal" data-title="Portada">
+            <div class="slide-card hero-card">
+                <div class="badge-tag">Proyecto Capstone · Control Automático II & Biotecnología</div>
+                <h1 class="hero-title">ALUNA PBR-02</h1>
+                <h2 class="hero-subtitle">Fotobiorreactor Biomimético Automatizado</h2>
+                <p class="hero-description">
+                    Termorregulación bioinspirada en los mecanismos pasivos del Frailejón de la Sierra Nevada de Santa Marta para la estabilización térmica del cultivo de la microalga marina <em class="sci-name">Tetraselmis chuii</em> en climas tropicales.
+                </p>
+                <div class="hero-chips">
+                    <span class="chip"><span class="chip-icon">🌿</span> Biomímesis (*Espeletia*)</span>
+                    <span class="chip"><span class="chip-icon">❄️</span> Termoelectricidad Peltier</span>
+                    <span class="chip"><span class="chip-icon">⚡</span> Control PI Anti-Windup (Cohen-Coon)</span>
+                    <span class="chip"><span class="chip-icon">📡</span> Telemetría IoT en Tiempo Real</span>
+                </div>
+                <div class="team-footer">
+                    <div class="team-meta">
+                        <strong>Autores (Equipo G3-ALPHA):</strong> Raúl Baytero · Jhon Cárdenas · Santiago Cavadia · Iván Meza
+                    </div>
+                    <div class="univ-meta">Universidad del Magdalena · Facultad de Ingeniería · Semillero ProtopIA · 2026</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SLIDE 02: EL ORIGEN DEL PROBLEMA Y RETO TÉRMICO -->
+        <!-- ============================================================ -->
+        <section class="slide" data-index="1" data-theme="amber" data-title="El Reto Térmico">
+            <div class="slide-card">
+                <div class="badge-tag">El Desafío Biotecnológico</div>
+                <h2 class="section-title">El Reto Térmico en Santa Marta</h2>
+                <h3 class="section-subtitle">Vulnerabilidad fisiológica de <em class="sci-name">Tetraselmis chuii</em> frente al clima tropical caribeño</h3>
+
+                <div class="grid-2-cols-media">
+                    <div class="media-container">
+                        <div class="img-zoom-wrapper">
+                            <img src="Algas.jpeg" alt="Cultivo de microalgas marinas Tetraselmis chuii en laboratorio" class="rounded-img zoomable" data-caption="Cultivo experimental de Tetraselmis chuii: Microalga marina verde rica en lípidos y proteínas de alto valor biotecnológico.">
+                            <div class="zoom-badge">🔍 Clic para ampliar</div>
+                        </div>
+                        <span class="img-caption"><em class="sci-name">Tetraselmis chuii</em> — Microalga marina unicelular fotosintética</span>
+                        <div class="bio-spec-card">
+                            <div class="bio-spec-item"><strong>Cepa Biológica:</strong> <em class="sci-name">Tetraselmis chuii</em> (Chlorophyta)</div>
+                            <div class="bio-spec-item"><strong>Medio Nutritivo:</strong> Marino enriquecido (Guillard f/2, 30–35 PSU)</div>
+                            <div class="bio-spec-item"><strong>Valor Aplicado:</strong> Alto contenido en lípidos, EPA/DHA y biomasa</div>
+                        </div>
+                    </div>
+
+                    <div class="content-container">
+                        <div class="glass-panel">
+                            <h4>🌡️ Restricciones Fisiológicas vs Clima</h4>
+                            <ul class="clean-list">
+                                <li><strong>Rango Óptimo Estricto:</strong> <span class="highlight-cyan">20.0 °C a 22.0 °C</span> para maximizar la división celular y síntesis proteica.</li>
+                                <li><strong>Estrés Térmico y Fotooxidación:</strong> Por encima de <strong>25.0 °C</strong>, se degrada la clorofila $a$ y $b$, desplomando la fotosíntesis.</li>
+                                <li><strong>Lisis y Muerte Celular:</strong> Por encima de los <strong>35.0 °C</strong>, ocurre desnaturalización enzimática y colapso letal del cultivo.</li>
+                                <li><strong>Clima Local (Santa Marta):</strong> Temperatura ambiente media de <strong>30 °C a 34 °C</strong> a nivel del mar.</li>
+                            </ul>
+                        </div>
+
+                        <div class="stat-highlight">
+                            <span class="stat-value">+39%</span>
+                            <div class="stat-text-group">
+                                <span class="stat-desc">Sobrecarga Térmica por Irradiancia</span>
+                                <p class="stat-sub">El fotoperiodo fotosintético (2,000–4,000 lux) genera un inevitable efecto invernadero que actúa como calentador permanente dentro del reactor.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SLIDE 03: BIOMÍMESIS: EL FRAILEJÓN DE LA SIERRA NEVADA -->
+        <!-- ============================================================ -->
+        <section class="slide" data-index="2" data-theme="emerald" data-title="Biomímesis">
+            <div class="slide-card">
+                <div class="badge-tag">La Inspiración Natural</div>
+                <h2 class="section-title"><em class="sci-name">Espeletia occulta</em></h2>
+                <h3 class="section-subtitle">Estrategias evolutivas de termorregulación pasiva en los páramos de la Sierra Nevada de Santa Marta</h3>
+
+                <div class="grid-2-cols-media">
+                    <div class="media-container">
+                        <div class="img-zoom-wrapper">
+                            <img src="frailejon_snsm.png" alt="Espeletia occulta en los páramos de la Sierra Nevada de Santa Marta" class="rounded-img zoomable" data-caption="Espeletia occulta subsp. glossophylla en su entorno natural a más de 3,500 msnm en la Sierra Nevada de Santa Marta.">
+                            <div class="zoom-badge">🔍 Clic para ampliar</div>
+                        </div>
+                        <span class="img-caption"><em class="sci-name">Espeletia occulta</em> subsp. <em>glossophylla</em> (Endémico de la SNSM)</span>
+                        <div class="bio-spec-card">
+                            <div class="bio-spec-item"><strong>Especie Botánica:</strong> <em class="sci-name">Espeletia occulta</em> subsp. <em>glossophylla</em> (Asteraceae)</div>
+                            <div class="bio-spec-item"><strong>Páramo Nativo:</strong> Sierra Nevada de Santa Marta (3,500 – 4,400 msnm)</div>
+                            <div class="bio-spec-item"><strong>Desafío Térmico:</strong> Heladas nocturnas ($< 0^\circ\text{C}$) y sobrecarga lumínica UV diurna</div>
+                        </div>
+                    </div>
+
+                    <div class="content-container">
+                        <div class="feature-card">
+                            <div class="feature-icon">🛡️</div>
+                            <div>
+                                <h5>Manto Marcescente (Necromasa Aislante)</h5>
+                                <p>Las hojas secas permanecen adheridas al tallo formando una camisa cilíndrica de microcapas de aire estancado que aísla los tejidos vasculares de oscilaciones extremas.</p>
+                            </div>
+                        </div>
+
+                        <div class="feature-card">
+                            <div class="feature-icon">✨</div>
+                            <div>
+                                <h5>Pubescencia Reflectiva (Indumento de Alto Albedo)</h5>
+                                <p>Densa capa de vellosidades epidérmicas blanquecinas que refleja la sobre-irradiancia solar y ultravioleta, evitando el recalentamiento tisular.</p>
+                            </div>
+                        </div>
+
+                        <div class="feature-card">
+                            <div class="feature-icon">🔄</div>
+                            <div>
+                                <h5>Nictinastia (Movimiento Foliar Circadiano)</h5>
+                                <p>La roseta foliar se pliega dinámicamente durante la noche, cerrándose sobre la yema apical (meristemo/médula) para impedir el congelamiento nocturno.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SLIDE 04: LA "LÓGICA INVERTIDA" EN ALUNA -->
+        <!-- ============================================================ -->
+        <section class="slide" data-index="3" data-theme="cyan" data-title="Lógica Invertida">
+            <div class="slide-card">
+                <div class="badge-tag">Traducción a la Ingeniería</div>
+                <h2 class="section-title">La Lógica Invertida</h2>
+                <h3 class="section-subtitle">Adaptando el comportamiento del páramo frío a la retención de frío en el trópico cálido</h3>
+
+                <div class="contrast-container">
+                    <div class="contrast-box cold-side">
+                        <div class="box-badge">Ecosistema Páramo (Naturaleza)</div>
+                        <h4>🏔️ El Frailejón Original</h4>
+                        <div class="cycle-step">
+                            <span class="bullet">🌙</span>
+                            <div><strong>Se CIERRA de noche:</strong> Para atrapar el calor interno acumulado y proteger su núcleo vital (meristemo) de la congelación nocturna ($&lt; 0^\circ\text{C}$).</div>
+                        </div>
+                        <div class="cycle-step">
+                            <span class="bullet">☀️</span>
+                            <div><strong>Se ABRE de día:</strong> Para captar la irradiancia solar y realizar fotosíntesis durante las horas de radiación templada.</div>
+                        </div>
+                        <div class="cycle-step">
+                            <span class="bullet">🛡️</span>
+                            <div><strong>Estrategia Energética:</strong> Regulación térmica 100% pasiva mediante pubescencia y nictinastia foliar sin gasto metabólico.</div>
+                        </div>
+                    </div>
+
+                    <div class="arrow-divider">➔</div>
+
+                    <div class="contrast-box hot-side">
+                        <div class="box-badge">Ecosistema Caribe (ALUNA PBR-02)</div>
+                        <h4>🌴 El "Frailejón Inverso"</h4>
+                        <div class="cycle-step">
+                            <span class="bullet">☀️</span>
+                            <div><strong>Se CIERRA en radiación pico:</strong> El <em>Escudo Orbital</em> rota $180^\circ$ para <strong>atrapar el frío</strong> de la Peltier y rebotar la sobrecarga térmica del sol.</div>
+                        </div>
+                        <div class="cycle-step">
+                            <span class="bullet">🌙</span>
+                            <div><strong>Se ABRE en condiciones favorables:</strong> Despeja el frente del reactor para fotosíntesis continua cuando la temperatura es segura.</div>
+                        </div>
+                        <div class="cycle-step">
+                            <span class="bullet">⚡</span>
+                            <div><strong>Estrategia Híbrida:</strong> Bombeo activo (Peltier) respaldado por blindaje pasivo de alto albedo (manta blanca), bajando el consumo en un 40%.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="banner-note">
+                    <span class="note-icon">💡</span>
+                    <div><strong>Sinergia de Actuación Pasiva-Activa:</strong> En el trópico, un sistema puramente activo saturaría la celda Peltier bajo el sol de Santa Marta (34 °C). El Escudo Frailejón reduce drásticamente el flujo radiante incidente ($q_{\text{rad}}$), permitiendo que la celda mantenga a <em class="sci-name">Tetraselmis chuii</em> en su zona de confort sin sobrecalentamiento.</div>
+                </div>
+
+                <div class="logic-metrics-grid">
+                    <div class="logic-metric-card">
+                        <div class="lmc-header">
+                            <span class="lmc-icon">🌡️</span>
+                            <h5>Gradiente Térmico ($\Delta T$)</h5>
+                        </div>
+                        <p><strong>Páramo:</strong> $T_{\text{ext}} < 0\,^\circ\text{C}$ vs $T_{\text{médula}} > 10\,^\circ\text{C}$ (Retiene calor vital contra congelación).<br>
+                        <strong>Caribe:</strong> $T_{\text{ext}} \approx 34\,^\circ\text{C}$ vs $T_{\text{cultivo}} = 21\,^\circ\text{C}$ (Bloquea radiación solar para no sobrecalentar el agua).</p>
+                    </div>
+
+                    <div class="logic-metric-card">
+                        <div class="lmc-header">
+                            <span class="lmc-icon">🛡️</span>
+                            <h5>Mecanismo de Blindaje</h5>
+                        </div>
+                        <p><strong>Páramo:</strong> Hojas secas (necromasa) + pubescencia blanca + nictinastia foliar nocturna.<br>
+                        <strong>Caribe:</strong> Escudo móvil semicilíndrico textil accionado por servomotor ($0^\circ \to 180^\circ$) en horas de máxima insolación.</p>
+                    </div>
+
+                    <div class="logic-metric-card">
+                        <div class="lmc-header">
+                            <span class="lmc-icon">⚡</span>
+                            <h5>Ahorro Energético</h5>
+                        </div>
+                        <p><strong>Páramo:</strong> $100\%$ pasivo sin costo metabólico para la planta.<br>
+                        <strong>Caribe:</strong> Reducción de más del <strong>40%</strong> en consumo eléctrico de la Peltier al amortiguar la carga térmica solar incidente.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SLIDE 05: INTEGRACIÓN FÍSICA Y ROL DE MATERIALES -->
+        <!-- ============================================================ -->
+        <section class="slide" data-index="4" data-theme="emerald" data-title="Materiales e Integración">
+            <div class="slide-card">
+                <div class="badge-tag">Arquitectura de Hardware y Función</div>
+                <h2 class="section-title">Integración Física y Rol de Materiales</h2>
+                <h3 class="section-subtitle">Para qué se utiliza cada componente en el biorreactor y cómo se acopla al sistema físico</h3>
+
+                <div class="budget-layout">
+                    <div class="budget-table-container">
+                        <table class="styled-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 26%;">Componente</th>
+                                    <th style="width: 36%;">Integración en el Sistema Físico</th>
+                                    <th style="width: 38%;">Función / Para qué se utiliza</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Disipador CPU KF200-DGT</strong><br><small class="text-faint">Torre heatpipes cobre + Fan 12V</small></td>
+                                    <td>Acoplado con pasta térmica a la cara caliente de la Peltier mediante abrazadera de presión.</td>
+                                    <td><strong>Evacuación forzada de calor (&gt;60W).</strong> Mantiene fría la cara caliente para que la cara fría pueda alcanzar bajas temperaturas.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Celda Peltier TEC1-12706</strong><br><small class="text-faint">12V 6A, Qmax 60W</small></td>
+                                    <td>Prensada entre el disipador CPU y la placa de interfaz metálica contra la botella.</td>
+                                    <td><strong>Bomba térmica de estado sólido.</strong> Extrae calor del reactor mediante efecto termoeléctrico sin partes móviles ni refrigerantes químicos.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Microcontrolador ESP32</strong><br><small class="text-faint">DevKitC 38 pines Dual-Core</small></td>
+                                    <td>Montado en la base de control, conectado a sensores y circuitos de potencia.</td>
+                                    <td><strong>Cerebro embebido del sistema.</strong> Lee sensores OneWire, modula la señal PWM en D25, orienta el servo en D27 y transmite telemetría serial.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Sensores DS18B20 (x2)</strong><br><small class="text-faint">Sondas sumergibles de acero inox</small></td>
+                                    <td><strong>Sensor 1:</strong> Sumergido en el agua del reactor.<br><strong>Sensor 2:</strong> En el disipador / ambiente exterior.</td>
+                                    <td><strong>Medición de temperatura precisa.</strong> El sensor 1 alimenta el lazo cerrado PI del cultivo; el sensor 2 monitorea el $\Delta T$ ambiental.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Módulo MOSFET D4184</strong><br><small class="text-faint">Doble transistor de potencia 400W</small></td>
+                                    <td>Interpuesto entre la fuente de 12V y la celda Peltier, comandado por la ESP32 (D25).</td>
+                                    <td><strong>Conmutador de potencia PWM.</strong> Modula la corriente continua de la Peltier (0% a 100%) a alta frecuencia sin desgaste mecánico.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Servomotor MG996R</strong><br><small class="text-faint">Alto torque 11 kg·cm, piñones metálicos</small></td>
+                                    <td>Fijado en el soporte superior del reactor alineado con el eje central de la botella.</td>
+                                    <td><strong>Accionamiento del Escudo Frailejón.</strong> Gira la pantalla reflectante ($0^\circ$ a $180^\circ$) para cubrir el cultivo cuando sube la temperatura.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Regulador Buck LM2596</strong><br><small class="text-faint">Módulo DC-DC Step-Down</small></td>
+                                    <td>Conectado a los 12V de la fuente; entrega 5V limpios y estables al servomotor.</td>
+                                    <td><strong>Aislamiento de ruido y estabilidad.</strong> Evita que los picos inductivos del motor reseteen o desestabilicen a la ESP32.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fuente de Poder 12V / 10A</strong><br><small class="text-faint">Conmutada regulada</small></td>
+                                    <td>Conectada a la red AC; provee las líneas de potencia a MOSFET, Peltier y Fan.</td>
+                                    <td><strong>Suministro central de energía.</strong> Entrega la alta corriente continua necesaria para la celda Peltier bajo carga plena.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Botella PET + Abrazadera</strong><br><small class="text-faint">Zuncho metálico de compresión</small></td>
+                                    <td>Cuerpo del reactor; la abrazadera deforma el plástico para forzar un plano contra la placa.</td>
+                                    <td><strong>Contenedor y puente térmico.</strong> Almacena el cultivo y maximiza el área de contacto para la transferencia de frío hacia el agua.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Aireador y Manguera</strong><br><small class="text-faint">Burbujeo continuo desde el fondo</small></td>
+                                    <td>Tubo sumergido hasta la base de la botella inyectando aire continuamente.</td>
+                                    <td><strong>Homogeneización y mezcla.</strong> Elimina estratificación térmica (evita lecturas falsas en el sensor) y suministra intercambio gaseoso ($CO_2/O_2$).</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Tela Blanca Reflectiva</strong><br><small class="text-faint">Textil sintético de alto albedo</small></td>
+                                    <td>Adherida a la pantalla semicilíndrica del escudo orbital accionado por el servo.</td>
+                                    <td><strong>Rechazo de radiación lumínica.</strong> Imita la pubescencia del frailejón, reflejando el exceso de luz solar para reducir la carga térmica.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="budget-summary-card">
+                        <!-- Thumbnail del disipador de CPU real ampliable -->
+                        <div class="hardware-preview-box">
+                            <div class="img-zoom-wrapper">
+                                <img src="5daa9f97-a9fb-4d75-a672-e936d83422cb.jpeg" alt="Disipador de CPU KF200-DGT para refrigeración de la Peltier" class="hardware-thumb zoomable" data-caption="Disipador de torre KF200-DGT con heatpipes de cobre y ventilador de alto flujo para evacuar el calor de la Peltier.">
+                                <div class="zoom-badge">🔍 Ampliar Disipador</div>
+                            </div>
+                            <span class="img-caption">KF200-DGT CPU Cooler (TDP &gt; 95W)</span>
+                        </div>
+
+                        <div class="budget-total-box">
+                            <span class="total-label">PRESUPUESTO GLOBAL DEL PROTOTIPO</span>
+                            <span class="total-amount">~$400.000 COP</span>
+                            <span class="total-sub">Aproximadamente 100 USD en total</span>
+                        </div>
+                        <div class="budget-insights">
+                            <div class="insight-item">
+                                <strong>🎯 Eficiencia Económica:</strong> Un fotobiorreactor comercial con control térmico automatizado supera los <strong>$15'000.000 COP</strong>.
+                            </div>
+                            <div class="insight-item">
+                                <strong>🛠️ Modularidad DIY:</strong> Componentes estándar de mercado integrados con ingeniería de control automático.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SLIDE 06: PROCESO DE CONSTRUCCIÓN Y MONTAJE DIY -->
+        <!-- ============================================================ -->
+        <section class="slide" data-index="5" data-theme="amber" data-title="Construcción DIY">
+            <div class="slide-card">
+                <div class="badge-tag">Fabricación Física y Montaje</div>
+                <h2 class="section-title">Construcción y Montaje DIY</h2>
+                <h3 class="section-subtitle">Soluciones ingeniosas de bajo costo para el acoplamiento mecánico y térmico</h3>
+
+                <div class="gallery-grid">
+                    <div class="gallery-card">
+                        <div class="img-frame img-zoom-wrapper">
+                            <img src="WhatsApp Image 2026-09-13 at 3.41.13 PM.jpeg" alt="Montaje del tanque PET y sensor sumergido" class="zoomable" data-caption="Cuerpo del biorreactor en botella PET con el sensor DS18B20 sumergido y manguera de burbujeo para aireación constante.">
+                            <div class="zoom-badge">🔍 Ampliar</div>
+                        </div>
+                        <div class="gallery-caption">
+                            <h5>1. Cuerpo del Reactor & Aireador</h5>
+                            <p>Adaptación de botella PET con sonda DS18B20 sumergida y manguera de burbujeo constante para mezcla térmica homogénea.</p>
+                        </div>
+                    </div>
+
+                    <div class="gallery-card">
+                        <div class="img-frame img-zoom-wrapper">
+                            <img src="WhatsApp Image 2026-09-13 at 3.41.13 PM (1).jpeg" alt="Detalle del acople térmico con zuncho metálico" class="zoomable" data-caption="Acoplamiento mecánico por presión: la abrazadera deforma el plástico para crear un área de contacto plano con la celda Peltier.">
+                            <div class="zoom-badge">🔍 Ampliar</div>
+                        </div>
+                        <div class="gallery-caption">
+                            <h5>2. Acoplamiento de Presión</h5>
+                            <p>Uso de abrazadera de manguera (zuncho) para deformar el plástico cilíndrico contra la placa plana, forzando el área de contacto.</p>
+                        </div>
+                    </div>
+
+                    <div class="gallery-card">
+                        <div class="img-frame img-zoom-wrapper">
+                            <img src="PrototipoFinal.jpeg" alt="Prototipo físico completo ensamblado y operando" class="zoomable" data-caption="Ensamble final completo: Disipador KF200-DGT, celda Peltier, sensor de temperatura y abrazadera montados en el biorreactor.">
+                            <div class="zoom-badge">🔍 Ampliar</div>
+                        </div>
+                        <div class="gallery-caption">
+                            <h5>3. Ensamble Final de Torre</h5>
+                            <p>Integración del CPU Cooler KF200-DGT con heatpipes de cobre, pasta térmica siliconada y electrónica de control cableada.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SLIDE 07: DIAGNÓSTICO Y RESOLUCIÓN DE FALLAS (TROUBLESHOOTING) -->
+        <!-- ============================================================ -->
+        <section class="slide" data-index="6" data-theme="red" data-title="Troubleshooting">
+            <div class="slide-card">
+                <div class="badge-tag">Ingeniería Experimental</div>
+                <h2 class="section-title">Troubleshooting y Resolución de Fallas</h2>
+                <h3 class="section-subtitle">Desafíos físicos reales identificados y resueltos en el banco de pruebas</h3>
+
+                <div class="troubleshoot-grid">
+                    <div class="trouble-card">
+                        <div class="trouble-header">
+                            <span class="status-dot solved"></span>
+                            <h4>Falla 1: Polaridad Invertida en la Celda</h4>
+                        </div>
+                        <p class="trouble-symptom"><strong>Síntoma:</strong> Los tubos de cobre del disipador se enfriaban mientras el agua de la botella se calentaba.</p>
+                        <p class="trouble-solution"><strong>Diagnóstico & Solución:</strong> La celda estaba extrayendo calor del aire y bombeándolo al agua. Se invirtió la polaridad en los bornes del MOSFET para restaurar la dirección correcta.</p>
+                    </div>
+
+                    <div class="trouble-card">
+                        <div class="trouble-header">
+                            <span class="status-dot solved"></span>
+                            <h4>Falla 2: Cuello de Botella del Plástico PET</h4>
+                        </div>
+                        <p class="trouble-symptom"><strong>Síntoma:</strong> La placa de metal estaba congelada pero el agua tardaba en descender de temperatura.</p>
+                        <p class="trouble-solution"><strong>Diagnóstico & Solución:</strong> El PET tiene conductividad muy baja ($k \approx 0.2\,\text{W/m}\cdot\text{K}$). Se requiere aislar térmicamente las paredes exteriores de la botella para retener el frío.</p>
+                    </div>
+
+                    <div class="trouble-card">
+                        <div class="trouble-header">
+                            <span class="status-dot solved"></span>
+                            <h4>Falla 3: Pérdida de Tensión en Cableado</h4>
+                        </div>
+                        <p class="trouble-symptom"><strong>Síntoma:</strong> La celda consumía apenas 1.5A a 2A en lugar de los 4A nominales de diseño.</p>
+                        <p class="trouble-solution"><strong>Diagnóstico & Solución:</strong> Caída $V_{GS}$ en el MOSFET a 3.3V y resistencia en cables Dupont. Se compensó elevando la fuente a 13.5V y cambiando el tramo de potencia a cable grueso.</p>
+                    </div>
+
+                    <div class="trouble-card">
+                        <div class="trouble-header">
+                            <span class="status-dot solved"></span>
+                            <h4>Falla 4: Bug de Telemetría en el Dashboard</h4>
+                        </div>
+                        <p class="trouble-symptom"><strong>Síntoma:</strong> El servidor web recibía datos pero los gráficos de ECharts permanecían en blanco.</p>
+                        <p class="trouble-solution"><strong>Diagnóstico & Solución:</strong> Error de referencia en el payload (`ReferenceError: latest`). Se corrigió el mapeo a `payload.latest` y se añadieron filtros para lecturas -127 °C.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SLIDE 08: PLATAFORMA IOT Y DASHBOARD EN TIEMPO REAL -->
+        <!-- ============================================================ -->
+        <section class="slide" data-index="7" data-theme="teal" data-title="Dashboard & IoT">
+            <div class="slide-card">
+                <div class="badge-tag">Software y Automatización</div>
+                <h2 class="section-title">Plataforma IoT & Dashboard Web</h2>
+                <h3 class="section-subtitle">Arquitectura desacoplada en tres capas para supervisión y control en tiempo real</h3>
+
+                <div class="grid-2-cols-wide">
+                    <div class="dashboard-media">
+                        <div class="img-zoom-wrapper">
+                            <img src="Captura desde 2026-09-14 11-01-16.png" alt="Dashboard web en tiempo real operando el biorreactor" class="dashboard-screenshot zoomable" data-caption="Dashboard web interactivo en tiempo real (Astro + ECharts): Lecturas en vivo de Sensor 1 (Agua), Sensor 2 (Ambiente) y porcentaje de modulación PWM.">
+                            <div class="zoom-badge">🔍 Clic para ampliar telemetría</div>
+                        </div>
+                        <span class="img-caption">Interfaz de control en vivo corriendo a través de la API Flask a 115200 baud</span>
+                    </div>
+
+                    <div class="arch-stack">
+                        <div class="stack-card">
+                            <div class="stack-badge">Capa 1: Hardware & Firmware</div>
+                            <h5>Microcontrolador ESP32 (C++)</h5>
+                            <p>Lectura de sensores OneWire con librería DallasTemperature, modulación PWM en D25 mediante periférico LEDC y control servo en D27.</p>
+                        </div>
+
+                        <div class="stack-card">
+                            <div class="stack-badge">Capa 2: Servidor Backend</div>
+                            <h5>API Flask & Motor de Control (Python)</h5>
+                            <p>Hilo serial asíncrono a 115200 baud, cálculo del lazo PI con anti-windup digital, ajuste FOPDT mediante `scipy.optimize.curve_fit` y API REST.</p>
+                        </div>
+
+                        <div class="stack-card">
+                            <div class="stack-badge">Capa 3: Interfaz de Usuario</div>
+                            <h5>Dashboard Web (Astro + ECharts)</h5>
+                            <p>Gráficas dinámicas escalables en tiempo real, monitoreo de corriente estimada, visualización de estado de la prueba y control manual.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SLIDE 09: ESTRATEGIA DE CONTROL COORDINADO (SPLIT-RANGE) -->
+        <!-- ============================================================ -->
+        <section class="slide" data-index="8" data-theme="cyan" data-title="Estrategia Split-Range">
+            <div class="slide-card">
+                <div class="badge-tag">Lógica de Control</div>
+                <h2 class="section-title">Estrategia Coordinada Split-Range</h2>
+                <h3 class="section-subtitle">Control por zonas de temperatura coordinando la Peltier y el Escudo Frailejón</h3>
+
+                <div class="split-range-display">
+                    <div class="range-zone zone-green">
+                        <div class="zone-header">
+                            <span class="zone-badge">ZONA NORMAL</span>
+                            <span class="zone-temp">T &le; 22.0 °C</span>
+                        </div>
+                        <div class="zone-body">
+                            <p><strong>Peltier:</strong> PWM modulado dinámicamente por el lazo PI.</p>
+                            <p><strong>Escudo:</strong> $\theta = 0^\circ$ (Totalmente abierto para fotosíntesis).</p>
+                        </div>
+                    </div>
+
+                    <div class="range-zone zone-yellow">
+                        <div class="zone-header">
+                            <span class="zone-badge">ZONA DE ALERTA</span>
+                            <span class="zone-temp">22.0 °C &lt; T &lt; 24.0 °C</span>
+                        </div>
+                        <div class="zone-body">
+                            <p><strong>Peltier:</strong> Potencia máxima $\text{PWM} = 255$ ($100\%$).</p>
+                            <p><strong>Escudo:</strong> Despliegue angular progresivo ($\theta \approx 90^\circ$).</p>
+                        </div>
+                    </div>
+
+                    <div class="range-zone zone-red">
+                        <div class="zone-header">
+                            <span class="zone-badge">ZONA CRÍTICA</span>
+                            <span class="zone-temp">T &ge; 24.0 °C</span>
+                        </div>
+                        <div class="zone-body">
+                            <p><strong>Peltier:</strong> Potencia máxima continua ($100\%$).</p>
+                            <p><strong>Escudo:</strong> $\theta = 180^\circ$ (Sombra total reflectiva tipo Frailejón).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-state-diagram">
+                    <div class="diagram-step">Sensor DS18B20 ($T_1$)</div>
+                    <div class="diagram-arrow">➔</div>
+                    <div class="diagram-step">Error $e(t) = T - T_{\text{set}}$</div>
+                    <div class="diagram-arrow">➔</div>
+                    <div class="diagram-step highlight">Lazo PI (Cohen-Coon)</div>
+                    <div class="diagram-arrow">➔</div>
+                    <div class="diagram-step">Split-Range (PWM + Servo)</div>
+                </div>
+
+                <div class="split-details-grid">
+                    <div class="split-detail-card">
+                        <div class="split-card-header">
+                            <span class="split-icon">❄️</span>
+                            <h4>Actuación Activa: Modulación Termoeléctrica (Peltier)</h4>
+                        </div>
+                        <ul class="split-list">
+                            <li><strong>Lazo PI Digital Anti-Windup (Pin D25):</strong> Modulación PWM de alta frecuencia (5 kHz) sobre el MOSFET D4184. Gestiona fluctuaciones térmicas rutinarias ($\pm 1.5\,^\circ\text{C}$) mediante sintonía Cohen-Coon.</li>
+                            <li><strong>Rechazo Rápido de Perturbaciones:</strong> Absorbe calor conductivo del medio acuoso sin desgaste mecánico ni alteración lumínica en condiciones de baja y media irradiancia.</li>
+                        </ul>
+                    </div>
+
+                    <div class="split-detail-card">
+                        <div class="split-card-header">
+                            <span class="split-icon">🛡️</span>
+                            <h4>Actuación Pasiva Biomimética: Escudo Frailejón (Servo)</h4>
+                        </div>
+                        <ul class="split-list">
+                            <li><strong>Blindaje Radiativo Servomotorizado (Pin D27):</strong> Giro progresivo $0^\circ \to 90^\circ \to 180^\circ$ mediante servomotor de alto torque MG996R (11 kg·cm).</li>
+                            <li><strong>Protección Vital de la Cepa:</strong> Si la radiación solar exterior empuja $T > 22.0\,^\circ\text{C}$, la manta reflectante corta el calor radiativo incidente ($q_{\text{rad}}$), impidiendo alcanzar los $35\,^\circ\text{C}$ (lisis celular).</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="split-synergy-banner">
+                    <span class="synergy-icon">⚡</span>
+                    <div>
+                        <strong>Sinergia Split-Range:</strong> La Peltier absorbe la microdinámica térmica interna por conducción, mientras el Escudo Frailejón neutraliza la macrocarga radiante exterior del sol caribeño. Esta división de roles permite sostener a <em class="sci-name">Tetraselmis chuii</em> en 21.0 °C con un consumo eléctrico total menor a 70 W.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SLIDE 10: CONCLUSIONES Y TRABAJO FUTURO -->
+        <!-- ============================================================ -->
+        <section class="slide" data-index="9" data-theme="teal" data-title="Conclusiones">
+            <div class="slide-card">
+                <div class="badge-tag">Cierre del Proyecto</div>
+                <h2 class="section-title">Conclusiones y Trabajo Futuro</h2>
+                <h3 class="section-subtitle">Impacto de la biomímesis y la automatización en la biotecnología marina</h3>
+
+                <div class="grid-2-cols">
+                    <div class="glass-panel">
+                        <h4>🎯 Logros y Conclusiones</h4>
+                        <ul class="clean-list">
+                            <li><strong>Viabilidad de la Biomímesis:</strong> El mecanismo foliar del Frailejón con lógica invertida alivia significativamente la carga de refrigeración sobre la celda Peltier.</li>
+                            <li><strong>Eficiencia Económica:</strong> Se demostró que con un presupuesto inferior a <strong>$400.000 COP</strong> es posible construir una plataforma de control térmico automatizada e IoT con calidad de laboratorio.</li>
+                            <li><strong>Integración Multidisciplinar:</strong> Fusión armónica de biología marina (<em class="sci-name">Tetraselmis chuii</em>), termodinámica, ingeniería electrónica y desarrollo de software moderno.</li>
+                        </ul>
+                    </div>
+
+                    <div class="glass-panel">
+                        <h4>🚀 Próximos Pasos Inmediatos</h4>
+                        <ul class="clean-list">
+                            <li>
+                                <strong>1. Finalizar Sistema de Apertura (Manta Exterior / Escudo Frailejón):</strong>
+                                Culminar el acoplamiento cinemático del servomotor MG996R con la pantalla textil reflectante ($0^\circ \to 180^\circ$) para automatizar la cobertura del reactor frente a sobre-irradiancia térmica.
+                            </li>
+                            <li>
+                                <strong>2. Mejorar y Consolidar el Sistema Físico:</strong>
+                                Reforzar el puente térmico con pasta de alta conductividad, aislar el perímetro de la botella de PET para frenar el calor ambiental de Santa Marta y blindar el cableado de potencia.
+                            </li>
+                            <li>
+                                <strong>3. Inyección e Inoculación de la Cepa (<em class="sci-name">Tetraselmis chuii</em>):</strong>
+                                Introducir el inóculo biológico vivo en medio líquido estéril (Guillard f/2) e iniciar las pruebas cinéticas de crecimiento celular y fotosíntesis bajo control térmico continuo a 21.0 °C.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="thank-you-box">
+                    <h3>¡Muchas Gracias por su Atención!</h3>
+                    <p>Espacio abierto para preguntas, discusión técnica y retroalimentación biológica.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal Lightbox para Ampliar Imágenes en Alta Resolución -->
+    <div class="image-modal" id="image-modal" aria-hidden="true">
+        <div class="modal-backdrop" id="modal-backdrop"></div>
+        <div class="modal-container">
+            <button class="modal-close-btn" id="modal-close-btn" title="Cerrar imagen (Esc)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div class="modal-image-wrapper">
+                <img src="" alt="" id="modal-img" class="modal-img">
+            </div>
+            <div class="modal-caption-bar" id="modal-caption"></div>
+        </div>
+    </div>
+
+    <!-- Barra de Control HUD Flotante (Inferior) -->
+    <footer class="hud-bar" id="hud-bar">
+        <div class="hud-progress-track">
+            <div class="hud-progress-fill" id="progress-fill"></div>
+        </div>
+
+        <div class="hud-content">
+            <div class="hud-left">
+                <span class="hud-logo">ALUNA PBR-02</span>
+                <span class="hud-sep">|</span>
+                <span class="hud-slide-title" id="hud-current-title">Portada</span>
+            </div>
+
+            <div class="hud-center">
+                <button class="hud-btn" id="btn-prev" title="Diapositiva anterior (Flecha Izq)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <button class="hud-btn hud-btn-play" id="btn-play" title="Reproducción automática (Espacio)">
+                    <svg id="icon-play" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>
+                    <svg id="icon-pause" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+                </button>
+                <button class="hud-btn" id="btn-next" title="Siguiente diapositiva (Flecha Der)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+            </div>
+
+            <div class="hud-right">
+                <span class="hud-counter" id="hud-counter">01 / 10</span>
+                <button class="hud-btn hud-btn-icon" id="btn-fullscreen" title="Pantalla completa (Tecla F)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Anime.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+    <!-- Script de Navegación, Modal y Animación -->
+    <script src="script.js"></script>
+</body>
+</html>

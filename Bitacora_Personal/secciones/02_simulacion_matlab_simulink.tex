@@ -1,0 +1,138 @@
+\section{Modelado Matemático y Simulación en MATLAB / Simulink}
+
+\subsection{Deducción del Modelo Matemático de la Planta (4 EDOs Acopladas)}
+Para evaluar el comportamiento del biorreactor antes de comprometer hardware o cepas vivas, formulé un modelo dinámico continuo de cuarto orden que acopla la cinética biológica con el balance de energía no lineal del sistema.
+
+\subsubsection{Cinética Biológica (Modelo de Cuota Celular de Droop)}
+A diferencia de los modelos clásicos de Monod, el modelo de Droop desacopla la absorción de nutrientes extracelulares de la tasa de crecimiento celular mediante la cuota intracelular $Q$ ($\text{mmol C / g biomasa}$):
+
+\begin{align}
+    \frac{dX}{dt} &= \left( \mu(Q, T, I) - D \right) X \label{eq:dx}\\
+    \frac{dS}{dt} &= D (S_{\text{in}} - S) - \rho(S) X \label{eq:ds}\\
+    \frac{dQ}{dt} &= \rho(S) - \mu(Q, T, I) Q \label{eq:dq}
+\end{align}
+donde:
+\begin{itemize}
+    \item $X(t)$: Concentración de biomasa de \textit{Tetraselmis chuii} [$\text{g/L}$].
+    \item $S(t)$: Concentración de Carbono Inorgánico Total (TIC) en el medio líquido [$\text{mmol/L}$].
+    \item $Q(t)$: Cuota celular interna de carbono [$\text{mmol C / g biomasa}$].
+    \item $D$: Tasa de dilución [$\text{h}^{-1}$] ($D=0$ en modo batch/por lotes).
+    \item $\rho(S) = \rho_{\max} \frac{S}{S + K_s}$: Tasa de absorción de sustrato (Michaelis-Menten).
+    \item $\mu(Q, T, I) = \mu_{\max} \left( 1 - \frac{Q_0}{Q} \right) \cdot f(T) \cdot f(I)$: Tasa específica de crecimiento modulada por temperatura y luz.
+\end{itemize}
+
+La función de limitación e inhibición térmica $f(T)$ es una curva asimétrica calibrada para \textit{Tetraselmis chuii}:
+\begin{equation}
+    f(T) = \exp \left( - \left( \frac{T - T_{\text{opt}}}{\beta_T} \right)^2 \right) \cdot \frac{1}{1 + \exp\left( \kappa_L (T - T_{\text{lisis}}) \right)}
+\end{equation}
+donde $T_{\text{opt}} = 21.0\,^\circ\text{C}$ y $T_{\text{lisis}} = 35.0\,^\circ\text{C}$.
+
+\subsubsection{Balance de Energía Térmica con Actuación Peltier y Convección Variable}
+La cuarta ecuación diferencial gobierna la temperatura del cultivo $T(t)$ [$\text{°C}$]:
+\begin{equation}
+    m_{\text{liq}} C_p \frac{dT}{dt} = \dot{Q}_{\text{solar}} + \dot{Q}_{\text{conv}}(s) + \dot{Q}_{\text{cond}} - \dot{Q}_{\text{evap}} - \dot{Q}_{\text{Peltier}} \label{eq:dt}
+\end{equation}
+
+Cada flujo de calor se modeló analíticamente según las leyes de transferencia de calor:
+\begin{enumerate}
+    \item \textbf{Carga Solar Incidente:}
+    \begin{equation}
+        \dot{Q}_{\text{solar}} = (1 - \alpha_{\text{escudo}} s) \cdot \tau_{\text{PET}} \cdot A_{\text{rad}} \cdot G_{\text{solar}}(t)
+    \end{equation}
+    donde $s \in [0, 1]$ es el estado de cierre del escudo ($s=0$ abierto, $s=1$ cerrado) y $\alpha_{\text{escudo}} \approx 0.85$ es la reflectividad de la tela blanca (albedo).
+    
+    \item \textbf{Intercambio Convectivo con Coeficiente Conmutable:}
+    \begin{equation}
+        \dot{Q}_{\text{conv}}(s) = U(s) \cdot A_{\text{lat}} \cdot \left( T_{\text{amb}}(t) - T(t) \right)
+    \end{equation}
+    donde el coeficiente global de transferencia de calor varía según el manto biomimético:
+    \begin{equation}
+        U(s) = (1 - s) \cdot U_{\text{abierto}} + s \cdot U_{\text{aislado}}
+    \end{equation}
+    con $U_{\text{abierto}} = 18.5\,\text{W/(m}^2\text{K)}$ y $U_{\text{aislado}} = 3.2\,\text{W/(m}^2\text{K)}$.
+    
+    \item \textbf{Tasa de Extracción Térmica de la Celda Peltier (TEC1-12706):}
+    \begin{equation}
+        \dot{Q}_{\text{Peltier}} = \alpha_{te} I_e T_c - \frac{1}{2} I_e^2 R_{te} - K_{te} (T_h - T_c)
+    \end{equation}
+    donde $\alpha_{te} = 0.05\,\text{V/K}$ es el coeficiente Seebeck efectivo, $R_{te} = 2.0\,\Omega$ es la resistencia óhmica interna (calor Joule parásito) y $K_{te} = 0.5\,\text{W/K}$ es la conductancia térmica parásita entre caras.
+\end{enumerate}
+
+\subsection{Arquitectura del Modelo Simulink Automatizado}
+En lugar de dibujar manualmente los bloques en la interfaz gráfica de Simulink, desarrollé el script automatizado \texttt{crear\_modelo\_simulink.m}. Dicho script construye programáticamente el archivo \texttt{aluna\_pbr\_simulink.slx} invocando la API nativa de Simulink (\texttt{add\_block}, \texttt{add\_line} y \texttt{set\_param}), garantizando reproducibilidad absoluta y control de versiones.
+
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\linewidth}{!}{
+    \begin{tikzpicture}[
+        block/.style={rectangle, draw=black, fill=black!3, thick, rounded corners=1pt, minimum height=1.3cm, minimum width=2.8cm, align=center, font=\small},
+        line/.style={draw=black, -{Latex[length=2.5mm]}, thick}
+    ]
+        % Bloques principales con espaciado amplio y equilibrado
+        \node [block] (env) at (0, 0) {Entorno Ambiental\\Santa Marta\\$G(t), T_{\text{amb}}(t)$};
+        \node [block] (ctrl) at (6.0, 0) {Controlador Híbrido\\Sigmoidal\\(Peltier + Escudo)};
+        \node [block] (plant) at (12.0, 0) {Planta Biorreactor\\4 EDOs Acopladas\\($X, S, Q, T$)};
+        \node [block] (dsp) at (12.0, -2.5) {Filtros Digitales DSP\\IIR ($\alpha=0.1$) + MA\\Instrumentación};
+        
+        % Conexiones directas no colisionantes con separación holgada
+        \draw [line] (env.east) -- node[midway, above=3pt, font=\scriptsize] {$T_{\text{amb}},\, G_{\text{solar}}$} (ctrl.west);
+        \draw [line] (ctrl.east) -- node[midway, above=3pt, font=\scriptsize] {$I_e,\, s$} (plant.west);
+        \draw [line] (plant.south) -- node[midway, right=3pt, font=\scriptsize] {$T_{\text{cultivo}}$} (dsp.north);
+        \draw [line] (dsp.west) -| node[pos=0.75, left=3pt, font=\scriptsize] {$T_{\text{medida}}$} (ctrl.south);
+        
+        % Perturbación directa superior despejada
+        \draw [line] (env.north) -- ++(0, 0.9) -| node[pos=0.25, above=3pt, font=\scriptsize] {Perturbación Térmica Ambiental: $T_{\text{amb}}(t),\, G(t)$} (plant.north);
+    \end{tikzpicture}
+    }
+    \caption{Diagrama de bloques del lazo cerrado de control implementado en Simulink.}
+    \label{fig:simulink_blocks}
+\end{figure}
+
+El modelo está compuesto por cuatro subsistemas modulares:
+\begin{enumerate}
+    \item \textbf{\texttt{Entorno\_Santa\_Marta}:} Función MATLAB que reproduce fielmente el ciclo circadiano diurno-nocturno de 24 horas en Santa Marta. Emite la irradiancia solar $G(t)$ con pico de $850\,\text{W/m}^2$, irradiancia fotosintética $I_{\text{par}}(t)$ con pico de $1000\,\mu\text{mol/(m}^2\text{s)}$ y la oscilación de temperatura exterior entre $25.0\,^\circ\text{C}$ (noche) y $34.0\,^\circ\text{C}$ (mediodía).
+    
+    \item \textbf{\texttt{Controlador\_Hibrido}:} Implementa una función sigmoide suave para eliminar el \textit{chattering} (oscilación de alta frecuencia) en el actuador mecánico del escudo:
+    \begin{equation}
+        \sigma(e) = \frac{1}{1 + \exp\left( -5.0 \cdot (e - 1.0) \right)}, \quad e = T_{\text{medida}} - T_{\text{sp}}
+    \end{equation}
+    Si $T_{\text{amb}} < T_{\text{medida}}$, el escudo se abre ($s = 1 - \sigma$) para disipar calor al aire fresco. Si $T_{\text{amb}} \ge T_{\text{medida}}$, el escudo permanece completamente cerrado ($s = 1.0$) para evitar el calentamiento por convección externa. La corriente Peltier se modula proporcionalmente con zona muerta ($I_e = 1.5(e - 0.5)$, acotada en $[0, 4.0]\,\text{A}$).
+
+    \item \textbf{\texttt{Planta\_Biorreactor\_4EDOs}:} Contiene cuatro integradores continuos con límites de saturación física estricta (\texttt{Int\_X}, \texttt{Int\_S}, \texttt{Int\_Q}, \texttt{Int\_T}) configurados con el solver de paso variable \texttt{ode45} durante 72 horas continuas (3 días de cultivo).
+
+    \item \textbf{\texttt{Filtros\_Digitales\_DSP}:} Simula los retardos y el acondicionamiento de los sensores físicos mediante un filtro IIR paso bajo de primer orden (EMA) con función de transferencia en el plano $Z$:
+    \begin{equation}
+        H_{\text{IIR}}(z) = \frac{\alpha}{1 - (1 - \alpha)z^{-1}}, \quad \alpha = 0.1
+    \end{equation}
+    y un filtro de promedio móvil (MA) de $N=15$ muestras para la señal solar.
+\end{enumerate}
+
+\subsection{Parámetros de Inicialización y Ejecución del Modelo}
+Para alimentar el espacio de trabajo (\textit{Workspace}) de MATLAB antes de ejecutar el solver, estructuré el script \texttt{init\_simulink\_aluna.m}, cuyos valores numéricos consolidados se detallan en la Tabla~\ref{tab:parametros_sim}.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Parámetros térmicos, cinéticos y de control en MATLAB/Simulink.}
+\label{tab:parametros_sim}
+\begin{tabularx}{\textwidth}{@{}l X c c@{}}
+\toprule
+\textbf{Variable / Parámetro} & \textbf{Descripción Física} & \textbf{Valor Nominal} & \textbf{Unidad} \\ \midrule
+$X_0$ & Concentración inicial de biomasa de microalga & 0.5 & $\text{g/L}$ \\
+$S_0$ & Concentración inicial de sustrato de carbono (TIC) & 5.0 & $\text{mmol/L}$ \\
+$Q_0$ & Cuota celular interna inicial de carbono & 5.0 & $\text{mmol C/g}$ \\
+$T_0$ & Temperatura inicial del cultivo en el reactor & 28.0 & $\text{°C}$ \\
+$T_{\text{sp}}$ & Setpoint óptimo de temperatura de control & 21.0 & $\text{°C}$ \\
+$\alpha_{te}$ & Coeficiente Seebeck efectivo de la celda TEC1-12706 & 0.05 & $\text{V/K}$ \\
+$R_{te}$ & Resistencia eléctrica interna óhmica de la celda Peltier & 2.0 & $\Omega$ \\
+$K_{te}$ & Conductancia térmica parásita entre caras del módulo & 0.5 & $\text{W/K}$ \\
+$I_e^{\max}$ & Límite estricto de corriente Peltier (protección anti-Joule) & 4.0 & $\text{A}$ \\
+$U_{\text{abierto}}$ & Coeficiente global convectivo con escudo abierto & 18.5 & $\text{W/(m}^2\text{K)}$ \\
+$U_{\text{aislado}}$ & Coeficiente global convectivo con escudo cerrado & 3.2 & $\text{W/(m}^2\text{K)}$ \\
+$\alpha_{\text{IIR}}$ & Factor de suavizado exponencial del filtro IIR digital & 0.10 & Adimensional \\
+$N_{\text{MA}}$ & Ventana de promediado móvil para radiación solar & 15 & Muestras \\ \bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Resultados y Validación de la Simulación Dinámica}
+La simulación demostró que la coordinación híbrida (Peltier + Escudo) reduce la temperatura desde los $28.0\,^\circ\text{C}$ iniciales hasta la banda de confort de $20.8\,^\circ\text{C}$ a $21.4\,^\circ\text{C}$ en menos de 90 minutos, manteniéndola estable frente al pico solar de las 12:00 m ($34.0\,^\circ\text{C}$ exterior) y recortando el consumo energético de la celda Peltier en un \textbf{41.3\%} comparado con un sistema de enfriamiento exclusivamente activo.

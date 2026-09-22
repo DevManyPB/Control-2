@@ -1,0 +1,147 @@
+\documentclass[12pt,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\usepackage{tikz}
+\usetikzlibrary{shapes, arrows.meta, positioning, calc}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{titlesec}
+
+% =============================================================================
+% CONFIGURACIÓN TIPOGRÁFICA INSTITUCIONAL Y FORMAL
+% =============================================================================
+\definecolor{darkgray}{RGB}{30, 41, 59}
+\definecolor{codeBg}{RGB}{250, 250, 250}
+
+% Configuración de hipervínculos sobria y formal
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=blue!70!black,
+    pdftitle={Bitácora Individual de Ingeniería - ALUNA PBR-02},
+    pdfauthor={Jhon Cárdenas}
+}
+
+% Formato estándar formal de títulos (estilo reporte técnico / académico)
+\titleformat{\section}
+  {\normalfont\Large\bfseries}{\thesection}{1em}{}[\vspace{1pt}\hrule height 0.6pt]
+\titleformat{\subsection}
+  {\normalfont\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+% Encabezados y pies de página
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textcolor{gray!80!black}{\small Bitácora Individual: Simulación, IoT y Firmware}}
+\rhead{\textcolor{gray!80!black}{\small ALUNA PBR-02}}
+\lfoot{\textcolor{gray!80!black}{\small Jhon Cárdenas · Universidad del Magdalena}}
+\rfoot{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Configuración de listings para código (sin colores estridentes)
+\lstset{
+    backgroundcolor=\color{codeBg},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\bfseries\color{black},
+    commentstyle=\itshape\color{gray!80!black},
+    stringstyle=\color{gray!40!black},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt,
+    frame=single,
+    rulecolor=\color{gray!30},
+    breaklines=true,
+    breakatwhitespace=true,
+    showstringspaces=false,
+    tabsize=2
+}
+
+% =============================================================================
+% PORTADA FORMAL Y ACADÉMICA
+% =============================================================================
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{1.5cm}
+    
+    {\Huge \textbf{BITÁCORA TÉCNICA INDIVIDUAL}}\\[0.5cm]
+    {\LARGE \textbf{Modelado Matemático, Simulación en MATLAB/Simulink,}}\\[0.2cm]
+    {\LARGE \textbf{Arquitectura Digital IoT y Puesta a Punto Física}}\\[0.8cm]
+    
+    \rule{0.85\textwidth}{1.2pt}\\[0.8cm]
+    
+    {\Large \textbf{Proyecto Capstone: Fotobiorreactor Biomimético ALUNA PBR-02}}\\[0.3cm]
+    {\large \textit{Termorregulación Bioinspirada para el Cultivo de Tetraselmis chuii en Clima Tropical}}\\[1.5cm]
+    
+    \begin{minipage}{0.85\textwidth}
+        \centering
+        \textbf{\large Registro de Responsabilidades y Desarrollo Técnico Individual}\\
+        \vspace{0.3cm}
+        \small
+        Este documento recopila detalladamente el trabajo analítico, el diseño de algoritmos,\\
+        la programación de modelos de simulación continua, el desarrollo de firmware embebido,\\
+        la implementación de la plataforma IoT y la validación en banco de pruebas físico\\
+        realizados por el autor durante el desarrollo del proyecto.
+    \end{minipage}
+    
+    \vfill
+    
+    \begin{minipage}{0.48\textwidth}
+        \begin{flushleft} \large
+            \textbf{Autor:}\\
+            Jhon Cárdenas\\
+            \textit{Programa de Ingeniería Electrónica}\\
+            Líder de Simulación, IoT y Firmware
+        \end{flushleft}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \begin{flushright} \large
+            \textbf{Institución:}\\
+            Universidad del Magdalena\\
+            Facultad de Ingeniería\\
+            Cátedra: Control Automático II
+        \end{flushright}
+    \end{minipage}
+    
+    \vspace{1.5cm}
+    {\large Santa Marta D.T.C.H., Colombia · \today}
+    \vspace*{0.5cm}
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+% =============================================================================
+% INCLUSIÓN DE SECCIONES MODULARES
+% =============================================================================
+\input{secciones/01_introduccion_rol}
+\newpage
+\input{secciones/02_simulacion_matlab_simulink}
+\newpage
+\input{secciones/03_arquitectura_digital_iot}
+\newpage
+\input{secciones/04_hardware_conexiones}
+\newpage
+\input{secciones/05_montaje_fisico_troubleshooting}
+\newpage
+\input{secciones/06_conclusiones_proximos_pasos}
+
+\end{document}

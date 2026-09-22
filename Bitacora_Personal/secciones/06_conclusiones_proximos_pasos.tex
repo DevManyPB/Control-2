@@ -1,0 +1,29 @@
+\section{Conclusiones y Próximos Pasos Inmediatos}
+
+\subsection{Conclusiones del Desarrollo Individual}
+El desarrollo del fotobiorreactor automatizado ALUNA PBR-02 ha permitido demostrar que es factible diseñar, simular y construir un sistema de control de temperatura de grado científico para biotecnología marina con un presupuesto inferior a los \textbf{\$400.000 COP} (aproximadamente \$100 USD), frente a alternativas comerciales que superan los \$15'000.000 COP.
+
+En el plano individual, los hitos consolidados bajo mi liderazgo técnico fueron:
+\begin{enumerate}[itemsep=2pt, topsep=3pt, parsep=1pt]
+    \item \textbf{Validación Teórica Integral en MATLAB/Simulink:} Se formuló e implementó exitosamente el modelo continuo de 4 EDOs no lineales (Droop + balance térmico Peltier). La generación procedural del modelo \texttt{aluna\_pbr\_simulink.slx} demostró que el mecanismo biomimético del Frailejón reduce el consumo eléctrico activo de la celda Peltier en más de un \textbf{40\%}.
+    \item \textbf{Arquitectura Embebida de Alta Eficiencia:} El firmware programado en C++ para la ESP32 opera de forma totalmente asíncrona y no bloqueante, sincronizando dos sondas 1-Wire a 10 bits de resolución, un timer PWM por hardware a $1\,\text{kHz}$ y la cinemática de un servomotor MG996R sin pérdida de muestras ni retardos acumulativos.
+    \item \textbf{Ecosistema IoT Operativo en Tiempo Real:} Se logró el despliegue exitoso del backend en Python (Flask) y el Dashboard web reactivo en Astro con visualizaciones de Apache ECharts, permitiendo supervisar el biorreactor, inspeccionar el gradiente térmico y operar actuadores de forma local y remota a 115200 baud.
+    \item \textbf{Superación Experimental de Retos Físicos:} Se diagnosticaron y corrigieron exitosamente anomalías termodinámicas y eléctricas reales (inversión de polaridad Peltier, cuello de botella conductivo del PET y caídas de tensión por resistencia parásita), consolidando un banco de pruebas físicamente estable.
+\end{enumerate}
+
+\subsection{Próximos Pasos Inmediatos (Plan de Trabajo)}
+Para culminar la transición del prototipo hacia su fase biológica activa, se ha establecido la siguiente hoja de ruta de ingeniería y validación experimental:
+
+\begin{enumerate}[label=\textbf{Hito \arabic*:}, leftmargin=*, itemsep=2pt, topsep=3pt, parsep=1pt]
+    \item \textbf{Finalización del Mecanismo de Apertura del Escudo Frailejón:}
+    Culminar el acoplamiento cinemático entre el piñón metálico del servomotor MG996R y la pantalla semicilíndrica reflectiva de tela blanca ($0^\circ \to 180^\circ$) para automatizar el blindaje diurno frente a la sobre-irradiancia solar.
+    
+    \item \textbf{Mejora y Blindaje Térmico del Sistema Físico:}
+    Instalar una camisa exterior de aislamiento térmico de espuma elastomérica sobre las caras de la botella PET que no están en contacto con la celda, y optimizar el puente térmico con pasta disipadora de alta conductividad ($>5.0\,\text{W/(m}\cdot\text{K)}$).
+    
+    \item \textbf{Caracterización FOPDT y Sintonía Definitiva Cohen-Coon:}
+    Ejecutar una prueba ininterrumpida de respuesta al escalón en lazo abierto ($0 \to 100\%$ PWM) sobre el volumen real de agua para extraer experimentalmente los parámetros de ganancia $K$, constante de tiempo $\tau$ y retardo de transporte $L$, cargando los coeficientes sintonizados en el lazo digital de la ESP32.
+    
+    \item \textbf{Inoculación de la Cepa Viva (\textit{Tetraselmis chuii}):}
+    Introducir el inóculo celular en medio estéril Guillard f/2 con aireación constante e iniciar la prueba biológica de 72 horas bajo fotoperiodo controlado (12h luz / 12h oscuridad) para evaluar la tasa de crecimiento celular y estabilidad osmótica a $21.0\,^\circ\text{C}$.
+\end{enumerate}
